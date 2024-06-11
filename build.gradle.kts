@@ -14,12 +14,17 @@ plugins {
     id("it.gianluz.capsule") version "1.0.3"
 }
 
+val ktorVersion: String by project
 dependencies {
     implementation(kotlin("reflect"))
     implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("com.google.code.gson:gson:2.10")
+    implementation("io.ktor:ktor-client-cio:${ktorVersion}")
+    implementation("io.ktor:ktor-client-core:${ktorVersion}")
     implementation("org.apache.logging.log4j:log4j-api-kotlin:1.4.0")
     implementation("org.apache.logging.log4j:log4j-core:2.23.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.redundent:kotlin-xml-builder:1.9.1")
     testImplementation(kotlin("test"))
 }
 
