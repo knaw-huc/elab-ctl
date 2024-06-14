@@ -61,19 +61,21 @@ fun archive(args: List<String>) {
 //            prettyPrint(elabConfig)
             val entryTypeName = elabConfig.entryTermSingular
             val entries = elabConfig.entries
-            entries.take(1).forEachIndexed { i, entryDescription ->
-                logger.info { entryDescription }
-                val teiName = teiName(entryTypeName, i + 1, entryDescription.shortName)
-                val entry = loadEntry(zip, entryDescription)
-                storeFacsimiles(projectName, teiName, entry.facsimiles)
-                facsimilePaths.addAll(entry.facsimiles.map { it.thumbnail.replace("http.*/jp2/".toRegex(), "") })
+            entries
+//                .take(1)
+                .forEachIndexed { i, entryDescription ->
+                    logger.info { entryDescription }
+                    val teiName = teiName(entryTypeName, i + 1, entryDescription.shortName)
+                    val entry = loadEntry(zip, entryDescription)
+                    storeFacsimiles(projectName, teiName, entry.facsimiles)
+                    facsimilePaths.addAll(entry.facsimiles.map { it.thumbnail.replace("http.*/jp2/".toRegex(), "") })
 
 //                logger.info { entry.metadata }
-                val tei = entry.toTEI(teiName)
-                val teiPath = "build/zip/$projectName/${teiName}.xml"
-                logger.info { "=> $teiPath" }
-                Path(teiPath).writeText(tei)
-            }
+                    val tei = entry.toTEI(teiName)
+                    val teiPath = "build/zip/$projectName/${teiName}.xml"
+                    logger.info { "=> $teiPath" }
+                    Path(teiPath).writeText(tei)
+                }
         }
         createZip(projectName)
         storeFacsimilePaths(facsimilePaths)
