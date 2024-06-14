@@ -3,6 +3,9 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://maven.huygens.knaw.nl/repository/")
+    }
 }
 
 plugins {
@@ -25,6 +28,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-core:2.23.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
+    implementation("nl.knaw.huygens:visitei:0.6.2")
     testImplementation(kotlin("test"))
 }
 
