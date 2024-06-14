@@ -96,6 +96,10 @@ object TEIBuilder {
         val doc = nl.knaw.huygens.tei.Document.createFromXml(wrapped, false)
         doc.accept(visitor)
         val result = visitor.context.result
+        if (!isWellFormed(result)) {
+            logger.error { "Bad XML in result:\n$result\n" }
+            throw RuntimeException("Bad XML")
+        }
         val transformed = unwrapFromXml(result)
         return transformed
     }
