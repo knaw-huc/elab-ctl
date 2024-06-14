@@ -222,7 +222,8 @@ internal class TranscriptionVisitor(
                         }
                         context.addCloseTag(INTERP_GRP)
                     }
-                    context.addLiteral(annotationData.text)
+                    val noteContent = annotationData.text.ifEmpty { annotationData.annotatedText }
+                    context.addLiteral(noteContent)
                     context.addCloseTag(note)
                 }
                 return STOP
