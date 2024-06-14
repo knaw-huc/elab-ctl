@@ -50,7 +50,9 @@ fun archive(args: List<String>) {
         val projectName = warPath.split('/').last().replace(".war", "")
         File("build/zip/$projectName").deleteRecursively()
         File("build/zip/$projectName/facsimiles").mkdirs()
+        File("out").mkdirs()
         logger.info { "<= $warPath" }
+        val facsimilePaths = mutableListOf<String>()
         ZipFile(warPath).use { zip ->
             val elabConfigEntry = zip.getEntry("data/config.json")
             val elabConfig: EditionConfig = zip.getInputStream(elabConfigEntry).use { input ->
@@ -64,6 +66,8 @@ fun archive(args: List<String>) {
                 val teiName = teiName(entryTypeName, i + 1, entryDescription.shortName)
                 val entry = loadEntry(zip, entryDescription)
                 storeFacsimiles(projectName, teiName, entry.facsimiles)
+                facsimilePaths.addAll(entry.facsimiles.map { it.thumbnail.replace("http.*/jp2/".toRegex(), "") })
+
 //                logger.info { entry.metadata }
                 val tei = entry.toTEI(teiName)
                 val teiPath = "build/zip/$projectName/${teiName}.xml"
@@ -72,12 +76,19 @@ fun archive(args: List<String>) {
             }
         }
         createZip(projectName)
+        storeFacsimilePaths(facsimilePaths)
     }
+}
+
+fun storeFacsimilePaths(facsimilePaths: List<String>) {
+    val path = "out/facsimile-paths.txt"
+    logger.info { "=> $path" }
+    File(path).writeText(facsimilePaths.sorted().joinToString("\n"))
 }
 
 private fun createZip(projectName: String) {
     val sourceFile = "build/zip/$projectName/"
-    val zipPath = "$projectName-archive.zip"
+    val zipPath = "out/$projectName-archive.zip"
     logger.info("=> $zipPath")
     FileOutputStream(zipPath).use { fos ->
         ZipOutputStream(fos).use { zipOut ->
@@ -101,7 +112,7 @@ private fun zipFile(fileToZip: File, fileName: String, zipOut: ZipOutputStream) 
             zipOut.closeEntry()
         }
         val children: Array<File> = fileToZip.listFiles() ?: emptyArray()
-        for (childFile in children) {
+        for (childFile in children.sorted()) {
             zipFile(childFile, "$fileName/${childFile.name}", zipOut)
         }
         return
