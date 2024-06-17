@@ -32,6 +32,7 @@ fun archive(args: List<String>) {
 }
 
 fun showHelp(args: List<String>) {
+    logger.debug { args }
     println("add command arg")
     println("available commands: ")
     commands.keys.sorted().forEach {

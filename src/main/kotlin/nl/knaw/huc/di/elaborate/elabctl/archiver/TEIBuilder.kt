@@ -47,7 +47,7 @@ object TEIBuilder {
             }
             if (facsimiles.isNotEmpty()) {
                 "facsimile" {
-                    facsimiles.forEachIndexed { i, facs ->
+                    facsimiles.forEachIndexed { i, _ ->
                         "graphic" {
                             attribute("url", "$teiName-${(i + 1).toString().padStart(2, '0')}.jp2")
                         }

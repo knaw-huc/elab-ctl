@@ -42,7 +42,7 @@ internal class TranscriptionVisitor(
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            context.addEmptyElementTag(Element(TAG_LB, "n", linenum.toString()))
+            context.addEmptyElementTag(Element(TAG_LB).withAttribute("n", linenum.toString()))
             linenum++
             return NEXT
         }
