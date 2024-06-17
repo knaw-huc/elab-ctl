@@ -68,7 +68,7 @@ class AnnotationBodyConverter {
         }
 
         private fun hiElement(e: Element): Element {
-            return Element("hi").withAttribute("rend", TEIBuilder.HI_TAGS.get(e.name))
+            return Element("hi").withAttribute("rend", TEIBuilder.HI_TAGS[e.name])
         }
     }
 

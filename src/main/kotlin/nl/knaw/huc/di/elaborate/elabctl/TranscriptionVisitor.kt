@@ -96,7 +96,7 @@ internal class TranscriptionVisitor(
         }
     }
 
-    internal class SpanHandler() : ElementHandler<XmlContext> {
+    internal class SpanHandler : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
 //            val type: String = element.getAttribute("data-type")
             return NEXT
@@ -270,7 +270,7 @@ internal class TranscriptionVisitor(
         private var skipNextNewline = false
 
         private const val TAG_LB = "lb"
-        val INTERP_GRP: String = "interpGrp"
+        const val INTERP_GRP: String = "interpGrp"
     }
 }
 
