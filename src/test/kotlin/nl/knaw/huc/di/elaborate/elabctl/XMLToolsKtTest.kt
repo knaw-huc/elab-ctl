@@ -8,7 +8,7 @@ class XMLToolsKtTest {
     @Test
     fun fixXhtml() {
         val badXml = "line1<br>line2"
-        val fixedXml = fixXhtml(badXml)
+        val fixedXml = nl.knaw.huc.di.elaborate.elabctl.archiver.fixXhtml(badXml)
         val expected = "line1<br/>line2"
         assertEquals(expected, fixedXml)
     }

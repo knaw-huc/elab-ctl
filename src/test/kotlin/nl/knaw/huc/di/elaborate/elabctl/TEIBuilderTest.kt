@@ -2,6 +2,12 @@ package nl.knaw.huc.di.elaborate.elabctl
 
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
+import nl.knaw.huc.di.elaborate.elabctl.archiver.AnnotationData
+import nl.knaw.huc.di.elaborate.elabctl.archiver.AnnotationType
+import nl.knaw.huc.di.elaborate.elabctl.archiver.TranscriptionVisitor
+import nl.knaw.huc.di.elaborate.elabctl.archiver.isWellFormed
+import nl.knaw.huc.di.elaborate.elabctl.archiver.unwrapFromXml
+import nl.knaw.huc.di.elaborate.elabctl.archiver.wrapInXml
 import nl.knaw.huygens.tei.Document
 
 class TEIBuilderTest {

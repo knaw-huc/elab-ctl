@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.elaborate.elabctl
+package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,9 +1,10 @@
-package nl.knaw.huc.di.elaborate.elabctl
+package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
+import nl.knaw.huc.di.elaborate.elabctl.logger
 
 object TEIBuilder {
 

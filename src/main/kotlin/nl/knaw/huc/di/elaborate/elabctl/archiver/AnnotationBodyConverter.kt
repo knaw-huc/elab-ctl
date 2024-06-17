@@ -1,6 +1,7 @@
-package nl.knaw.huc.di.elaborate.elabctl
+package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.util.TreeSet
+import nl.knaw.huc.di.elaborate.elabctl.logger
 import nl.knaw.huygens.tei.Comment
 import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor

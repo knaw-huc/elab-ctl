@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.elaborate.elabctl
+package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.io.IOException
 import java.io.StringReader
@@ -9,6 +9,7 @@ import org.jsoup.nodes.Entities
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import org.xml.sax.helpers.DefaultHandler
+import nl.knaw.huc.di.elaborate.elabctl.logger
 
 private const val XML_CLOSE_TAG = "</xml>"
 private const val XML_OPEN_TAG = "<xml>"
