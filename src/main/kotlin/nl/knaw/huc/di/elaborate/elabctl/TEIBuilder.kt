@@ -76,7 +76,7 @@ object TEIBuilder {
                 "body" {
                     parallelTexts
                         .filter { it.value.text.isNotEmpty() }
-                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
+//                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
                             val annotationMap = textLayer.annotationData.associateBy { it.n }
                             "div" {
@@ -90,8 +90,8 @@ object TEIBuilder {
     }
 
     private fun String.transform(transcriptionType: String, annotationMap: Map<Long, AnnotationData>): String {
-        val visitor = TranscriptionVisitor(transcriptionType = transcriptionType, annotationMap = annotationMap)
-        val prepared = replace("<br>", "<br/>\n")
+        val visitor = TranscriptionVisitor(annotationMap = annotationMap)
+        val prepared = replace("<br>", "<br/>\n").replace("\u00A0", " ")
         val wrapped = wrapInXml(prepared)
         val doc = nl.knaw.huygens.tei.Document.createFromXml(wrapped, false)
         doc.accept(visitor)

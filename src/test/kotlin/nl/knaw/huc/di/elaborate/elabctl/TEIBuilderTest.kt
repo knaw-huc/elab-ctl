@@ -31,7 +31,7 @@ class TEIBuilderTest {
                 type = AnnotationType(1, "Person", "description", mapOf("person_id" to "PE00011313"))
             )
         )
-        val visitor = TranscriptionVisitor(transcriptionType = "Transcription", annotationMap = annotationMap)
+        val visitor = TranscriptionVisitor(annotationMap = annotationMap)
         val prepared = text.replace("<br>", "<br/>\n")
         val wrapped = wrapInXml(prepared)
         val doc = Document.createFromXml(wrapped, false)

@@ -2,6 +2,8 @@ package nl.knaw.huc.di.elaborate.elabctl
 
 import java.util.ArrayDeque
 import java.util.Deque
+import nl.knaw.huygens.tei.Comment
+import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor
 import nl.knaw.huygens.tei.Element
 import nl.knaw.huygens.tei.ElementHandler
@@ -12,20 +14,21 @@ import nl.knaw.huygens.tei.XmlContext
 import nl.knaw.huygens.tei.handlers.XmlTextHandler
 
 internal class TranscriptionVisitor(
-    transcriptionType: String,
     annotationMap: Map<Long, AnnotationData>
 ) : DelegatingVisitor<XmlContext>(XmlContext()) {
 
     init {
         setTextHandler(XmlTextHandler())
+        setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
         addElementHandler(SupHandler(annotationMap), "sup")
         addElementHandler(BrHandler(), "br")
         addElementHandler(LbHandler(), TAG_LB)
         addElementHandler(IgnoreHandler(NEXT), "content")
-        addElementHandler(DivHandler(transcriptionType), "div")
+        addElementHandler(DivHandler(), "div")
         addElementHandler(XmlHandler(), "xml")
         addElementHandler(SpanHandler(), "span")
+        linenum = 1
 //        addElementHandler(
 //            AnnotationHandler(config, entityManager),
 //            Transcription.BodyTags.ANNOTATION_BEGIN,
@@ -71,10 +74,8 @@ internal class TranscriptionVisitor(
         }
     }
 
-    internal class DivHandler(private val transcriptionType: String?) : ElementHandler<XmlContext> {
+    internal class DivHandler : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
-            element.setAttribute("type", transcriptionType)
-            context.addOpenTag(element)
             return NEXT
         }
 
@@ -223,7 +224,8 @@ internal class TranscriptionVisitor(
                         context.addCloseTag(INTERP_GRP)
                     }
                     val noteContent = annotationData.text.ifEmpty { annotationData.annotatedText }
-                    context.addLiteral(noteContent)
+                    val fixedContent = AnnotationBodyConverter.convert(noteContent)
+                    context.addLiteral(fixedContent)
                     context.addCloseTag(note)
                 }
                 return STOP
@@ -255,6 +257,12 @@ internal class TranscriptionVisitor(
 
     }
 
+    class IgnoreCommentHandler : CommentHandler<XmlContext> {
+        override fun visitComment(p0: Comment?, p1: XmlContext?): Traversal {
+            return STOP
+        }
+    }
+
     companion object {
         private val openElements: Deque<Element> = ArrayDeque()
 
@@ -265,3 +273,4 @@ internal class TranscriptionVisitor(
         val INTERP_GRP: String = "interpGrp"
     }
 }
+

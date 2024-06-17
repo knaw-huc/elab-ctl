@@ -24,11 +24,12 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("io.ktor:ktor-client-cio:${ktorVersion}")
     implementation("io.ktor:ktor-client-core:${ktorVersion}")
+    implementation("nl.knaw.huygens:visitei:0.6.2")
     implementation("org.apache.logging.log4j:log4j-api-kotlin:1.4.0")
     implementation("org.apache.logging.log4j:log4j-core:2.23.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // 1.7.0 leads to compile error
+    implementation("org.jsoup:jsoup:1.17.2")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
-    implementation("nl.knaw.huygens:visitei:0.6.2")
     testImplementation(kotlin("test"))
 }
 

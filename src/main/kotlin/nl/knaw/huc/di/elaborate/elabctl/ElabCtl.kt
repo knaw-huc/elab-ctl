@@ -13,6 +13,8 @@ import kotlin.system.measureTimeMillis
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -61,9 +63,11 @@ fun archive(args: List<String>) {
 //            prettyPrint(elabConfig)
             val entryTypeName = elabConfig.entryTermSingular
             val entries = elabConfig.entries
+            val total = entries.size
             entries
 //                .take(1)
                 .forEachIndexed { i, entryDescription ->
+                    logger.info { "entry ${i + 1} / $total..." }
                     logger.info { entryDescription }
                     val teiName = teiName(entryTypeName, i + 1, entryDescription.shortName)
                     val entry = loadEntry(zip, entryDescription)
@@ -75,6 +79,7 @@ fun archive(args: List<String>) {
                     val teiPath = "build/zip/$projectName/${teiName}.xml"
                     logger.info { "=> $teiPath" }
                     Path(teiPath).writeText(tei)
+                    logger.info { "" }
                 }
         }
         createZip(projectName)
@@ -131,12 +136,21 @@ private fun zipFile(fileToZip: File, fileName: String, zipOut: ZipOutputStream) 
 }
 
 fun storeFacsimiles(projectName: String, baseName: String, facsimiles: ArrayList<Facsimile>) {
+    val client = HttpClient(CIO) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 10_000
+        }
+        install(HttpRequestRetry) {
+            retryOnServerErrors(maxRetries = 5)
+            exponentialDelay()
+        }
+    }
     facsimiles.forEachIndexed { i, f ->
         val url = f.thumbnail.replace("/adore-djatoka.*localhost:8080".toRegex(), "")
         logger.info { url }
         val filePath = "build/zip/$projectName/facsimiles/${baseName}-${(i + 1).toString().padStart(2, '0')}.jp2"
         runBlocking {
-            val bytes: ByteArray = HttpClient(CIO).get(url).body<ByteArray>()
+            val bytes: ByteArray = client.get(url).body<ByteArray>()
             logger.info { "=> $filePath" }
             File(filePath).writeBytes(bytes)
         }

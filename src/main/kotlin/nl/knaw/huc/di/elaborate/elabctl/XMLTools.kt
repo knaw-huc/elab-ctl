@@ -4,6 +4,8 @@ import java.io.IOException
 import java.io.StringReader
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Entities
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import org.xml.sax.helpers.DefaultHandler
@@ -40,5 +42,16 @@ fun isWellFormed(body: String): Boolean {
         return false
     }
     return true
+}
+
+fun fixXhtml(badXml: String): String {
+    val doc = Jsoup.parse(badXml)
+    doc.outputSettings().indentAmount(0).prettyPrint(false).escapeMode(Entities.EscapeMode.xhtml).charset("UTF-8")
+    return doc.body()
+        .html()
+        .replace(" />", "/>")
+        .replace("\u00A0", "&#160;")
+        .replace("<br>", "<br/>")
+    // return Jsoup.clean(badxml, Whitelist.relaxed());
 }
 
