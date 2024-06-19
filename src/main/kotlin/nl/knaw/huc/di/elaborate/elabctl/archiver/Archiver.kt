@@ -4,18 +4,12 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.net.URLDecoder
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.request.get
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -24,19 +18,24 @@ import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.toTEI
 
 object Archiver {
+
+    val json = Json { ignoreUnknownKeys = true }
+
     @OptIn(ExperimentalSerializationApi::class)
     fun archive(warPaths: List<String>) {
         warPaths.forEach { warPath ->
             val projectName = warPath.split('/').last().replace(".war", "")
             File("build/zip/$projectName").deleteRecursively()
-            File("build/zip/$projectName/facsimiles").mkdirs()
+            File("build/zip/$projectName").mkdirs()
             File("out").mkdirs()
             logger.info { "<= $warPath" }
             val facsimilePaths = mutableListOf<String>()
+            val scriptLines = mutableListOf("mkdir /data/tmp/facsimiles")
+            scriptLines.add("cd /data/webapps/jp2")
             ZipFile(warPath).use { zip ->
                 val elabConfigEntry = zip.getEntry("data/config.json")
                 val elabConfig: EditionConfig = zip.getInputStream(elabConfigEntry).use { input ->
-                    Json.decodeFromStream(input)
+                    json.decodeFromStream(input)
                 }
 //            prettyPrint(elabConfig)
                 val entryTypeName = elabConfig.entryTermSingular
@@ -47,9 +46,11 @@ object Archiver {
                     .forEachIndexed { i, entryDescription ->
                         logger.info { "entry ${i + 1} / $total..." }
                         logger.info { entryDescription }
-                        val teiName = teiName(entryTypeName, i + 1, entryDescription.shortName)
+                        val teiName =
+                            teiName(entryTypeName, i + 1, entryDescription.shortName)
                         val entry = loadEntry(zip, entryDescription)
-                        storeFacsimiles(projectName, teiName, entry.facsimiles)
+
+                        processFacsimiles(teiName, entry.facsimiles, scriptLines)
                         facsimilePaths.addAll(entry.facsimiles.map {
                             it.thumbnail.replace(
                                 "http.*/jp2/".toRegex(),
@@ -67,7 +68,17 @@ object Archiver {
             }
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)
+            storeScriptLines(scriptLines)
         }
+    }
+
+    private fun storeScriptLines(scriptLines: MutableList<String>) {
+        scriptLines.add("cd /data/tmp && rm facsimiles.zip && zip -r facsimiles.zip \$(find facsimiles/ -type f | sort) && rm -rf /data/tmp/facsimiles")
+        val path = "out/copy-facsimiles.sh"
+        logger.info { "=> $path" }
+        val file = File(path)
+        file.writeText(scriptLines.joinToString("\n"))
+        file.setExecutable(true)
     }
 
     private fun storeFacsimilePaths(facsimilePaths: List<String>) {
@@ -118,36 +129,49 @@ object Archiver {
         }
     }
 
-    private fun storeFacsimiles(projectName: String, baseName: String, facsimiles: ArrayList<Facsimile>) {
-        val client = HttpClient(CIO) {
-            install(HttpTimeout) {
-                requestTimeoutMillis = 10_000
-            }
-            install(HttpRequestRetry) {
-                retryOnServerErrors(maxRetries = 5)
-                exponentialDelay()
-            }
-        }
+    private fun processFacsimiles(
+        baseName: String,
+        facsimiles: ArrayList<Facsimile>,
+        scriptLines: MutableList<String>
+    ) {
+//        val client = HttpClient(CIO) {
+//            install(HttpTimeout) {
+//                requestTimeoutMillis = 10_000
+//            }
+//            install(HttpRequestRetry) {
+//                retryOnServerErrors(maxRetries = 5)
+//                exponentialDelay()
+//            }
+//        }
         facsimiles.forEachIndexed { i, f ->
             val url = f.thumbnail.replace("/adore-djatoka.*localhost:8080".toRegex(), "")
             logger.info { url }
-            val filePath = "build/zip/$projectName/facsimiles/${baseName}-${(i + 1).toString().padStart(2, '0')}.jp2"
-            runBlocking {
-                val bytes: ByteArray = client.get(url).body<ByteArray>()
-                logger.info { "=> $filePath" }
-                File(filePath).writeBytes(bytes)
-            }
+            val originalFilePath = URLDecoder.decode(url.replace("http.*/jp2/".toRegex(), ""), "UTF-8")
+            val imageName = "${baseName}-${(i + 1).toString().padStart(2, '0')}.jp2"
+
+            scriptLines.add("cp \"$originalFilePath\" \"/data/tmp/facsimiles/$imageName\"")
+//            val filePath = "build/zip/$projectName/facsimiles/$imageName"
+//            runBlocking {
+//                val bytes: ByteArray = client.get(url).body<ByteArray>()
+//                logger.info { "=> $filePath" }
+//                File(filePath).writeBytes(bytes)
+//            }
         }
     }
 
     private fun teiName(entryTypeName: String, i: Int, shortName: String): String =
-        "$entryTypeName-${i.toString().padStart(4, '0')}-${shortName.trim()}".trim('-')
+        "$entryTypeName-${i.toString().padStart(4, '0')}-${
+            shortName.trim().replace("[ /:&()\\[\\]]+".toRegex(), "_")
+        }".trim(
+            '-',
+            '_'
+        )
 
     @OptIn(ExperimentalSerializationApi::class)
     fun loadEntry(zip: ZipFile, entryDescription: EntryDescription): Entry {
         val zipEntry = zip.getEntry("data/${entryDescription.datafile}")
         return zip.getInputStream(zipEntry).use { input ->
-            Json.decodeFromStream<Entry>(input)
+            json.decodeFromStream<Entry>(input)
         }
     }
 

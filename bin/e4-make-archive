@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+./gradlew -q run --args "archive $*" && \
+scp out/copy-facsimiles.sh tiler: && \
+ssh tiler ./copy-facsimiles.sh && \
+scp tiler:/data/tmp/facsimiles.zip .
