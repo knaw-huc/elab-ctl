@@ -104,7 +104,10 @@ object TEIBuilder {
             logger.error { "Bad XML in result:\n$result\n" }
             throw RuntimeException("Bad XML")
         }
-        return unwrapFromXml(result).replace("\u00A0", " ")
+        return unwrapFromXml(result)
+            .replace("\u00A0", " ")
+            .replace(" </hi>", "</hi> ")
+            .replace("</p>", "</p>\n")
     }
 
 }
