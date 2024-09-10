@@ -18,7 +18,7 @@ object TEIBuilder {
         "sup" to "superscript"
     )
 
-    fun Entry.toTEI(teiName: String): String {
+    fun Entry.toTEI(teiName: String, projectName: String): String {
         val printOptions = PrintOptions(
             singleLineTextElements = true,
             indent = "  ",
@@ -27,10 +27,17 @@ object TEIBuilder {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
         return xml("TEI") {
-            xmlns = "http:www.tei-c.org/ns/1.0"
+            xmlns = "http://www.tei-c.org/ns/1.0"
             "teiHeader" {
                 "fileDesc" {
-                    "titelStmt" {
+                    "sourceDesc" {
+                        "p" {
+                            "ptr" {
+                                attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
+                            }
+                        }
+                    }
+                    "titleStmt" {
                         "title" {
                             -name
                         }
@@ -60,8 +67,8 @@ object TEIBuilder {
                         .filter { it.value.isNotEmpty() }
                         .forEach {
                             "interp" {
-                                attribute("type", it.field)
-                                attribute("value", it.value)
+                                attribute("type", it.field.asType())
+                                -it.value
                             }
                         }
                 }
@@ -71,9 +78,14 @@ object TEIBuilder {
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
                             val annotationMap = textLayer.annotationData.associateBy { it.n }
+                            val text = textLayer.text.transform(annotationMap)
                             "div" {
                                 attribute("type", layerName)
-                                unsafeText(textLayer.text.transform(annotationMap))
+                                if (text.contains("</p>")) {
+                                    unsafeText(text)
+                                } else {
+                                    "p" { unsafeText(text) }
+                                }
                             }
                         }
                 }
@@ -92,8 +104,7 @@ object TEIBuilder {
             logger.error { "Bad XML in result:\n$result\n" }
             throw RuntimeException("Bad XML")
         }
-        val transformed = unwrapFromXml(result)
-        return transformed
+        return unwrapFromXml(result).replace("\u00A0", " ")
     }
 
 }

@@ -56,3 +56,22 @@ fun fixXhtml(badXml: String): String {
     // return Jsoup.clean(badxml, Whitelist.relaxed());
 }
 
+fun String.asType(): String = nonAlphaNumericRegex.replace(this) { "_" }.snakeToUpperCamelCase()
+
+val camelRegex = "(?<=[a-zA-Z])[A-Z]".toRegex()
+val snakeRegex = "_[a-zA-Z]".toRegex()
+val nonAlphaNumericRegex = "[^a-zA-Z0-9]+".toRegex()
+
+// String extensions
+fun String.camelToSnakeCase(): String =
+    camelRegex.replace(this) {
+        "_${it.value}"
+    }.lowercase()
+
+fun String.snakeToLowerCamelCase(): String =
+    snakeRegex.replace(this) {
+        it.value.replace("_", "")
+            .uppercase()
+    }
+
+fun String.snakeToUpperCamelCase(): String = this.snakeToLowerCamelCase().capitalize()

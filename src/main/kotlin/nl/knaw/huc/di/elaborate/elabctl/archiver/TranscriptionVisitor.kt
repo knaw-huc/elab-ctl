@@ -28,6 +28,7 @@ internal class TranscriptionVisitor(
         addElementHandler(DivHandler(), "div")
         addElementHandler(XmlHandler(), "xml")
         addElementHandler(SpanHandler(), "span")
+        addElementHandler(PHandler(), "p")
         linenum = 1
 //        addElementHandler(
 //            AnnotationHandler(config, entityManager),
@@ -44,6 +45,18 @@ internal class TranscriptionVisitor(
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             context.addEmptyElementTag(Element(TAG_LB).withAttribute("n", linenum.toString()))
             linenum++
+            return NEXT
+        }
+    }
+
+    internal class PHandler : ElementHandler<XmlContext> {
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            context.addOpenTag("p")
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            context.addCloseTag("p")
             return NEXT
         }
     }
@@ -213,13 +226,19 @@ internal class TranscriptionVisitor(
                 if (marker == "end") {
                     val key = id.toLong()
                     val annotationData = annotationMap[key]!!
-                    val note = Element("note", mapOf("xml:id" to "note_$id", "type" to annotationData.type.name))
+                    val note = Element(
+                        "note",
+                        mapOf("xml:id" to "note_$id", "type" to annotationData.type.name.asType())
+                    )
                     context.addOpenTag(note)
                     val annotationMetadataMap: Map<String, String> = annotationData.type.metadata
                     if (annotationMetadataMap.isNotEmpty()) {
                         context.addOpenTag(INTERP_GRP)
                         annotationMetadataMap.forEach { (type, value) ->
-                            context.addEmptyElementTag(interpElement(type, value))
+                            val interp = Element("interp", mapOf("type" to type.asType()))
+                            context.addOpenTag(interp)
+                            context.addLiteral(value)
+                            context.addCloseTag("interp")
                         }
                         context.addCloseTag(INTERP_GRP)
                     }
@@ -242,17 +261,6 @@ internal class TranscriptionVisitor(
                 context.addCloseTag(openElements.pop())
             }
             return NEXT
-        }
-
-        companion object {
-            private fun interpElement(key: String, value: String): Element =
-                Element(
-                    "interp",
-                    mapOf(
-                        "type" to key,
-                        "value" to value
-                    )
-                )
         }
 
     }

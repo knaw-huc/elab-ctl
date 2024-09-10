@@ -59,7 +59,7 @@ object Archiver {
                         })
 
 //                logger.info { entry.metadata }
-                        val tei = entry.toTEI(teiName)
+                        val tei = entry.toTEI(teiName, projectName.replace("elab4-", ""))
                         val teiPath = "build/zip/$projectName/${teiName}.xml"
                         logger.info { "=> $teiPath" }
                         Path(teiPath).writeText(tei)
