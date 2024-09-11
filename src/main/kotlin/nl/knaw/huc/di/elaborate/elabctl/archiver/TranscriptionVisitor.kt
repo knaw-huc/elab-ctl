@@ -2,6 +2,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.util.ArrayDeque
 import java.util.Deque
+import nl.knaw.huc.di.elaborate.elabctl.archiver.AnnotationBodyConverter.DelHandler
 import nl.knaw.huygens.tei.Comment
 import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor
@@ -27,6 +28,8 @@ internal class TranscriptionVisitor(
         addElementHandler(IgnoreHandler(NEXT), "content", "font", "div")
         addElementHandler(XmlHandler(), "xml")
         addElementHandler(SpanHandler(), "span")
+        addElementHandler(DelHandler(), "strike")
+
         linenum = 1
 //        addElementHandler(
 //            AnnotationHandler(config, entityManager),
