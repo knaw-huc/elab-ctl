@@ -161,7 +161,7 @@ object Archiver {
 
     private fun teiName(entryTypeName: String, i: Int, shortName: String): String =
         "$entryTypeName-${i.toString().padStart(4, '0')}-${
-            shortName.trim().replace("[ /:&()\\[\\]]+".toRegex(), "_")
+            nonAlphaNumericRegex.replace(shortName.trim()) { "_" }
         }".trim(
             '-',
             '_'

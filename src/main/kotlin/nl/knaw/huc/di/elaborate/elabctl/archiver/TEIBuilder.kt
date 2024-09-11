@@ -30,13 +30,6 @@ object TEIBuilder {
             xmlns = "http://www.tei-c.org/ns/1.0"
             "teiHeader" {
                 "fileDesc" {
-                    "sourceDesc" {
-                        "p" {
-                            "ptr" {
-                                attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
-                            }
-                        }
-                    }
                     "titleStmt" {
                         "title" {
                             -name
@@ -48,6 +41,13 @@ object TEIBuilder {
                         }
                         "date" {
                             -currentDate
+                        }
+                    }
+                    "sourceDesc" {
+                        "p" {
+                            "ptr" {
+                                attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
+                            }
                         }
                     }
                 }

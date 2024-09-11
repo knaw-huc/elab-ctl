@@ -101,7 +101,7 @@ class AnnotationBodyConverter {
                 visitor.setTextHandler(XmlTextHandler())
                 visitor.setCommentHandler(IgnoreCommentHandler())
                 visitor.setDefaultElementHandler(DefaultElementHandler())
-                visitor.addElementHandler(IgnoreElementHandler(), "xml", "span")
+                visitor.addElementHandler(IgnoreElementHandler(), "xml", "span", "font", "div")
                 visitor.addElementHandler(HiHandler(), *TEIBuilder.HI_TAGS.keys.toTypedArray())
                 visitor.addElementHandler(DelHandler(), "strike")
                 visitor.addElementHandler(BrHandler(), "br")

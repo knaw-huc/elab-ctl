@@ -22,13 +22,11 @@ internal class TranscriptionVisitor(
         setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
         addElementHandler(SupHandler(annotationMap), "sup")
-        addElementHandler(BrHandler(), "br")
+        addElementHandler(BrHandler(), "br", "p")
         addElementHandler(LbHandler(), TAG_LB)
-        addElementHandler(IgnoreHandler(NEXT), "content")
-        addElementHandler(DivHandler(), "div")
+        addElementHandler(IgnoreHandler(NEXT), "content", "font", "div")
         addElementHandler(XmlHandler(), "xml")
         addElementHandler(SpanHandler(), "span")
-        addElementHandler(PHandler(), "p")
         linenum = 1
 //        addElementHandler(
 //            AnnotationHandler(config, entityManager),
@@ -45,18 +43,7 @@ internal class TranscriptionVisitor(
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             context.addEmptyElementTag(Element(TAG_LB).withAttribute("n", linenum.toString()))
             linenum++
-            return NEXT
-        }
-    }
-
-    internal class PHandler : ElementHandler<XmlContext> {
-        override fun enterElement(element: Element, context: XmlContext): Traversal {
-            context.addOpenTag("p")
-            return NEXT
-        }
-
-        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            context.addCloseTag("p")
+            context.addLiteral("\n")
             return NEXT
         }
     }
@@ -80,16 +67,6 @@ internal class TranscriptionVisitor(
 
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             return onEnter
-        }
-
-        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            return NEXT
-        }
-    }
-
-    internal class DivHandler : ElementHandler<XmlContext> {
-        override fun enterElement(element: Element, context: XmlContext): Traversal {
-            return NEXT
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
