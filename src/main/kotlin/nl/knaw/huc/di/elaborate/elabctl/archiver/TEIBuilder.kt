@@ -12,10 +12,10 @@ object TEIBuilder {
         "strong" to "bold",
         "b" to "bold",
         "u" to "underline",
-        "em" to "italic",
-        "i" to "italic",
+        "em" to "italics",
+        "i" to "italics",
         "sub" to "subscript",
-        "sup" to "superscript"
+        "sup" to "super"
     )
 
     fun Entry.toTEI(teiName: String, projectName: String): String {
@@ -37,16 +37,26 @@ object TEIBuilder {
                     }
                     "publicationStmt" {
                         "publisher" {
-                            -"Huygens Instituut"
+                            "name"{
+                                attribute("ref", "https://huygens.knaw.nl")
+                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
+                            }
                         }
                         "date" {
+                            attribute("when", currentDate)
                             -currentDate
+                        }
+                        "ptr" {
+                            attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
                         }
                     }
                     "sourceDesc" {
-                        "p" {
-                            "ptr" {
-                                attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
+                        "msDesc" {
+                            "msIdentifier"{
+                                "country"
+                                "settlement"
+                                "institution"
+                                "idno"
                             }
                         }
                     }
