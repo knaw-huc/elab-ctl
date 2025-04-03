@@ -15,6 +15,19 @@ plugins {
     kotlin("plugin.serialization") version "1.9.22"
 
     id("it.gianluz.capsule") version "1.0.3"
+    id("com.github.johnrengelman.shadow") version "8.0.0"
+}
+
+buildscript {
+    repositories {
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+    }
+    dependencies {
+        classpath("it.gianluz:gradle-capsule-plugin:1.0.3")
+        classpath("gradle.plugin.com.github.johnrengelman:shadow:8.0.0")
+    }
 }
 
 val ktorVersion: String by project
@@ -30,11 +43,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // 1.7.0 leads to compile error
     implementation("org.jsoup:jsoup:1.17.2")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
+//    implementation("app.cash.barber:barber:2024.01.12.173005-933c241")
+    implementation("com.github.spullara.mustache.java:compiler:0.9.10")
     testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 kotlin {
@@ -46,28 +57,17 @@ application {
     applicationName = "elabctl"
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 tasks.jar {
     manifest {
         attributes["Main-Class"] = application.mainClass
     }
 }
-//tasks.create<FatCapsule>("createExecutable") {
-//    group = "Distribution"
-//    description = "Package into a executable fat jar"
-//    applicationClass(application.mainClass.toString())
-//    reallyExecutable
-//    archiveFileName = application.applicationName
-//}
 
-buildscript {
-    repositories {
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
-        }
-    }
-    dependencies {
-        classpath("it.gianluz:gradle-capsule-plugin:1.0.3")
-    }
+tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    archiveFileName.set("${project.name}.jar")
 }
 
-//apply(plugin = "it.gianluz.capsule")
