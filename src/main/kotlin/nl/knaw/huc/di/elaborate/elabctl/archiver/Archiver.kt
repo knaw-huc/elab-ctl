@@ -30,8 +30,11 @@ object Archiver {
             File("out").mkdirs()
             logger.info { "<= $warPath" }
             val facsimilePaths = mutableListOf<String>()
-            val scriptLines = mutableListOf("mkdir /data/tmp/facsimiles")
-            scriptLines.add("cd /data/webapps/jp2")
+            val scriptLines = mutableListOf(
+                "rm -rf /data/tmp/facsimiles",
+                "mkdir -p /data/tmp/facsimiles",
+                "cd /data/webapps/jp2"
+            )
             ZipFile(warPath).use { zip ->
                 val elabConfigEntry = zip.getEntry("data/config.json")
                 val elabConfig: EditionConfig = zip.getInputStream(elabConfigEntry).use { input ->
@@ -73,7 +76,15 @@ object Archiver {
     }
 
     private fun storeScriptLines(scriptLines: MutableList<String>) {
-        scriptLines.add("cd /data/tmp && rm facsimiles.zip && zip -r facsimiles.zip \$(find facsimiles/ -type f | sort) && rm -rf /data/tmp/facsimiles")
+        scriptLines.add(
+            "cd /data/tmp &&" +
+                    " if [ -f facsimiles.zip ] ; then rm facsimiles.zip; fi &&" +
+                    " echo creating checksum file... &&" +
+                    " sha256sum \$(find facsimiles/ -type f | sort) > manifest-sha256.txt &&" +
+                    " echo moving facsimiles to zip archive... &&" +
+                    " zip -r facsimiles.zip \$(find facsimiles/ -type f | sort) manifest-sha256.txt &&" +
+                    " rm -rf /data/tmp/facsimiles manifest-sha256.txt"
+        )
         val path = "out/copy-facsimiles.sh"
         logger.info { "=> $path" }
         val file = File(path)
@@ -143,6 +154,7 @@ object Archiver {
 //                exponentialDelay()
 //            }
 //        }
+        scriptLines.add("echo copying ${facsimiles.size} image files...")
         facsimiles.forEachIndexed { i, f ->
             val url = f.thumbnail.replace("/adore-djatoka.*localhost:8080".toRegex(), "")
             logger.info { url }
@@ -184,4 +196,6 @@ object Archiver {
         logger.info { prettyJson.encodeToString(value = elabConfig) }
     }
 
+    // TODO:
+    // add shs256sum checksums of all files in the archive, in a file called `manifest-sha256.txt`
 }
