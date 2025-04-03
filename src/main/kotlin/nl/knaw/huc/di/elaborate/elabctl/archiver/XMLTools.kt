@@ -74,4 +74,4 @@ fun String.snakeToLowerCamelCase(): String =
             .uppercase()
     }
 
-fun String.snakeToUpperCamelCase(): String = this.snakeToLowerCamelCase().capitalize()
+fun String.snakeToUpperCamelCase(): String = this.snakeToLowerCamelCase().replaceFirstChar { it.uppercase() }
