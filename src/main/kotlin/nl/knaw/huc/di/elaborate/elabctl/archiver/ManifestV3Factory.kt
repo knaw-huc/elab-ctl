@@ -1,7 +1,6 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.net.URI
-import info.freelibrary.iiif.presentation.v3.Annotation
 import info.freelibrary.iiif.presentation.v3.AnnotationPage
 import info.freelibrary.iiif.presentation.v3.Canvas
 import info.freelibrary.iiif.presentation.v3.Manifest
@@ -29,7 +28,7 @@ object ManifestV3Factory {
         val canvas1 = Canvas("canvas-id", Label("en", "VGM001001681_01_n"))
             .setWidthHeight(2115, 1270)
         val page1 = AnnotationPage<PaintingAnnotation>("page-id")
-        val annotation = PaintingAnnotation("annotation-id",canvas1)
+        val annotation = PaintingAnnotation("annotation-id", canvas1)
         canvas1.paintingPages.add(page1.addAnnotations(annotation))
         manifest.canvases = listOf(
             canvas1

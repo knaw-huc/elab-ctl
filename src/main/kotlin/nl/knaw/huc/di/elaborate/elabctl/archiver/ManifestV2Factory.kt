@@ -3,6 +3,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.Locale
+import com.fasterxml.jackson.databind.ObjectWriter
 import de.digitalcollections.iiif.model.GenericService
 import de.digitalcollections.iiif.model.ImageContent
 import de.digitalcollections.iiif.model.MetadataEntry
@@ -24,7 +25,7 @@ import de.digitalcollections.iiif.model.sharedcanvas.Sequence
 
 object ManifestV2Factory {
 
-    val WRITER = IiifObjectMapper().writerWithDefaultPrettyPrinter()
+    val WRITER: ObjectWriter = IiifObjectMapper().writerWithDefaultPrettyPrinter()
 
     fun createFromImages(imagePaths: List<String>): String {
         val canvas = Canvas("url").apply {
