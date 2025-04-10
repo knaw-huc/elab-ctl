@@ -11,7 +11,7 @@ repositories {
 plugins {
     application
 
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.1.0"
     kotlin("plugin.serialization") version "1.9.22"
 
     id("it.gianluz.capsule") version "1.0.3"
@@ -45,6 +45,13 @@ dependencies {
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
 //    implementation("app.cash.barber:barber:2024.01.12.173005-933c241")
     implementation("com.github.spullara.mustache.java:compiler:0.9.10")
+    implementation("info.freelibrary:jiiify-presentation-v3:0.12.4") // iiif v3
+    implementation("de.digitalcollections.iiif:iiif-apis:0.3.11") // iiif v2
+    implementation("io.arrow-kt:arrow-core:2.0.1")
+    implementation("io.arrow-kt:arrow-fx-coroutines:2.0.1")
+
+    runtimeOnly("com.github.jai-imageio:jai-imageio-jpeg2000:1.4.0") // jpeg2000 handling in imageio
+
     testImplementation(kotlin("test"))
 }
 
