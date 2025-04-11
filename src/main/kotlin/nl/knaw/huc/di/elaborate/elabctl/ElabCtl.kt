@@ -42,13 +42,14 @@ fun generateManifests(args: List<String>) {
     if (args.isNotEmpty()) {
         val zipPath = args[0]
         logger.info { "<= $zipPath" }
+        val manifestFactory = ManifestV3Factory(
+            "https://manifests.editem.huygens.knaw.nl/projectname",
+            "https://iiif.editem.huygens.knaw.nl/projectname"
+        )
         FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath(zipPath)
             .groupBy { it.fileName.substringBeforeLast('-') }
             .forEach { (entryName, facsimileDimensions) ->
-                val manifestJson = ManifestV3Factory(
-                    "https://manifests.editem.huygens.knaw.nl/projectname",
-                    "https://iiif.editem.huygens.knaw.nl/projectname"
-                ).forEntry(entryName, facsimileDimensions)
+                val manifestJson = manifestFactory.forEntry(entryName, facsimileDimensions)
                 val outPath = "out/$entryName-manifest.json"
                 logger.info { "=> $outPath" }
                 Path(outPath).writeText(manifestJson.toString())
