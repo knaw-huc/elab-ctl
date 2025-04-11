@@ -31,15 +31,15 @@ fun main(args: Array<String>) {
 }
 
 fun archive(args: List<String>) {
-    logger.info { "args=${args}" }
+    logger.debug { "args=${args}" }
     if (args.size > 1) {
         Archiver.archive(args)
     }
 }
 
 fun generateManifests(args: List<String>) {
-    logger.info { "args=${args}" }
-    if (args.size > 1) {
+    logger.debug { "args=${args}" }
+    if (args.isNotEmpty()) {
         val zipPath = args[0]
         logger.info { "<= $zipPath" }
         FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath(zipPath)
