@@ -5,18 +5,6 @@ import org.junit.jupiter.api.Test
 class ManifestFactoryTest {
 
     @Test
-    fun `test ManifestV2Factory`() {
-        val json = ManifestV2Factory.createFromImages(listOf())
-        println(json)
-    }
-
-    @Test
-    fun `test ManifestFactory manifest`() {
-        val json = ManifestV2Factory.manifest()
-        println(json)
-    }
-
-    @Test
     fun `test reading facsimiles zip`() {
         val facsimileDimensionsList =
             FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath("facsimiles.zip")

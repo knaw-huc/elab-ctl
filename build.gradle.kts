@@ -34,11 +34,9 @@ val ktorVersion: String by project
 dependencies {
     implementation(kotlin("reflect"))
 
-//    implementation("app.cash.barber:barber:2024.01.12.173005-933c241")
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("com.github.spullara.mustache.java:compiler:0.9.10")
     implementation("com.google.code.gson:gson:2.10")
-    implementation("de.digitalcollections.iiif:iiif-apis:0.3.11") // iiif v2
     implementation("info.freelibrary:jiiify-presentation-v3:0.12.4") // iiif v3
     implementation("io.arrow-kt:arrow-core:2.0.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:2.0.1")
