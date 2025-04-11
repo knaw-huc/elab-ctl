@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
 fun archive(args: List<String>) {
     logger.info { "args=${args}" }
     if (args.size > 1) {
-        Archiver.archive(args.subList(1, args.size))
+        Archiver.archive(args)
     }
 }
 

@@ -1,6 +1,5 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
-import java.net.URI
 import info.freelibrary.iiif.presentation.v3.AnnotationPage
 import info.freelibrary.iiif.presentation.v3.Canvas
 import info.freelibrary.iiif.presentation.v3.ImageContent
@@ -14,9 +13,6 @@ import info.freelibrary.iiif.presentation.v3.properties.behaviors.ManifestBehavi
 import info.freelibrary.iiif.presentation.v3.services.ImageService3
 
 class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
-
-//    const val MANIFEST_BASE_URL = "https://manifests.editem.huygens.knaw.nl/projectname"
-//    const val IIIF_BASE_URL = "https://iiif.editem.huygens.knaw.nl/projectname"
 
     data class FacsimileDimensions(
         val fileName: String,
@@ -33,7 +29,6 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
         manifest.metadata = listOf(
             Metadata(Label("en", "EntryName"), Value(I18n("en", entryName)))
         )
-        manifest.rights = URI("http://creativecommons.org/publicdomain/zero/1.0/")
 
         val canvases = facsimileDimensions.sortedBy { it.fileName }
             .mapIndexed { i, facsimileDimensions ->
@@ -42,19 +37,15 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
                     Canvas("$manifestId#canvas-$i", Label("en", imageBaseName))
                         .setWidthHeight(facsimileDimensions.width, facsimileDimensions.height)
                 val page = AnnotationPage<PaintingAnnotation>("$manifestId#page-$i")
-                val annotation = PaintingAnnotation("$manifestId#annotation-${facsimileDimensions.fileName}", canvas)
                 val imageUrl = "$iiifBaseUrl/${facsimileDimensions.fileName}"
-                annotation.setChoice(true).bodies.add(
-                    ImageContent("$imageUrl/full/max/0/default.jpg").setWidthHeight(
-                        facsimileDimensions.width,
-                        facsimileDimensions.height
-                    ).setServices(
-                        ImageService3(
-                            ImageService3.Profile.LEVEL_ONE,
-                            imageUrl
+                val annotation =
+                    PaintingAnnotation("$manifestId#annotation-${facsimileDimensions.fileName}", canvas).apply {
+                        setChoice(true).bodies.add(
+                            ImageContent("$imageUrl/full/max/0/default.jpg")
+                                .setWidthHeight(facsimileDimensions.width, facsimileDimensions.height)
+                                .setServices(ImageService3(ImageService3.Profile.LEVEL_ONE, imageUrl))
                         )
-                    )
-                )
+                    }
                 canvas.paintingPages.add(page.addAnnotations(annotation))
                 canvas
             }
