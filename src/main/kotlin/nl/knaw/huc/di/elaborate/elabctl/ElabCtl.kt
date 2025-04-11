@@ -1,13 +1,10 @@
 package nl.knaw.huc.di.elaborate.elabctl
 
-import kotlin.io.path.Path
-import kotlin.io.path.writeText
 import kotlin.system.measureTimeMillis
 import arrow.core.tail
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver
-import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
-import nl.knaw.huc.di.elaborate.elabctl.archiver.ManifestV3Factory
+import nl.knaw.huc.di.elaborate.elabctl.manifests.ManifestGenerator
 
 val logger = logger("Main")
 val commands = mapOf(
@@ -17,14 +14,19 @@ val commands = mapOf(
 )
 
 fun main(args: Array<String>) {
+    println("elabctl - elaborate tools")
+    println("-------------------------\n")
     if (args.isEmpty()) {
+        println("add command arg")
         showHelp(args.asList())
     } else {
         val command = args[0]
         if (commands.containsKey(command)) {
+            println("command: $command\n")
             val millis = measureTimeMillis { commands[command]?.call(args.asList().tail()) }
-            println("> running `$command` took ${convertMillisToTimeString(millis)}")
+            println("\n> running `$command` took ${convertMillisToTimeString(millis)}")
         } else {
+            println("unknown command: $command\n")
             showHelp(args.asList())
         }
     }
@@ -32,8 +34,10 @@ fun main(args: Array<String>) {
 
 fun archive(args: List<String>) {
     logger.debug { "args=${args}" }
-    if (args.size > 1) {
+    if (args.isNotEmpty()) {
         Archiver.archive(args)
+    } else {
+        println("missing argument(s): war-path(s) - path(s) to .war-files to generate archive files out of")
     }
 }
 
@@ -41,25 +45,14 @@ fun generateManifests(args: List<String>) {
     logger.debug { "args=${args}" }
     if (args.isNotEmpty()) {
         val zipPath = args[0]
-        logger.info { "<= $zipPath" }
-        val manifestFactory = ManifestV3Factory(
-            "https://manifests.editem.huygens.knaw.nl/projectname",
-            "https://iiif.editem.huygens.knaw.nl/projectname"
-        )
-        FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath(zipPath)
-            .groupBy { it.fileName.substringBeforeLast('-') }
-            .forEach { (entryName, facsimileDimensions) ->
-                val manifestJson = manifestFactory.forEntry(entryName, facsimileDimensions)
-                val outPath = "out/$entryName-manifest.json"
-                logger.info { "=> $outPath" }
-                Path(outPath).writeText(manifestJson.toString())
-            }
+        ManifestGenerator.generateFrom(zipPath)
+    } else {
+        println("missing argument: zip-path - path to the facsimiles.zip")
     }
 }
 
 fun showHelp(args: List<String>) {
     logger.debug { args }
-    println("add command arg")
     println("available commands: ")
     commands.keys.sorted().forEach {
         println("  $it")

@@ -2,14 +2,17 @@ all: help
 TAG = elab-ctl
 DOCKER_DOMAIN = registry.diginfra.net/tt
 SHELL=/bin/bash
-
+SHADOW_JAR=build/libs/elabctl.jar
+NEWER_SOURCE_FILES=$(shell find src/main -newer $(SHADOW_JAR) -type f)
 
 .PHONY: shadow-jar
 shadow-jar:
-	make build/libs/elabctl.jar
+	@make $(SHADOW_JAR)
 
-build/libs/elabctl.jar: $(shell find src/main -type f) build.gradle.kts settings.gradle.kts
+$(SHADOW_JAR): build.gradle.kts settings.gradle.kts $(NEWER_SOURCE_FILES)
 	./gradlew shadowJar
+	@echo
+	@touch $@
 
 .PHONY: tests
 tests:
