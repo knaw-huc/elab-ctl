@@ -43,11 +43,13 @@ fun archive(args: List<String>) {
 
 fun generateManifests(args: List<String>) {
     logger.debug { "args=${args}" }
-    if (args.isNotEmpty()) {
+    if (args.size == 2) {
         val zipPath = args[0]
-        ManifestGenerator.generateFrom(zipPath)
+        val projectName = args[1]
+        ManifestGenerator.generateFrom(zipPath, projectName)
     } else {
-        println("missing argument: zip-path - path to the facsimiles.zip")
+        println("missing argument(s): zip-path - path to the facsimiles.zip")
+        println("                     project-name - the project name")
     }
 }
 

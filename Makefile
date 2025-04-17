@@ -40,5 +40,4 @@ help:
 	@echo "  archive       - to run the archiver"
 	@echo "  drafts-list   - to list the available drafts"
 	@echo "  editions-list - to list the available editions"
-
 	@echo

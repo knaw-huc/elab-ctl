@@ -37,7 +37,7 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
                     Canvas("$manifestId#canvas-$i", Label("en", imageBaseName))
                         .setWidthHeight(facsimileDimensions.width, facsimileDimensions.height)
                 val page = AnnotationPage<PaintingAnnotation>("$manifestId#page-$i")
-                val imageUrl = "$iiifBaseUrl/${facsimileDimensions.fileName}"
+                val imageUrl = "$iiifBaseUrl${facsimileDimensions.fileName}"
                 val annotation =
                     PaintingAnnotation("$manifestId#annotation-${facsimileDimensions.fileName}", canvas).apply {
                         setChoice(true).bodies.add(
