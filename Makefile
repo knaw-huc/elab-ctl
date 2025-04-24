@@ -30,6 +30,17 @@ drafts-list:
 editions-list:
 	./scripts/e4-list-editions.sh
 
+.PHONY: brieven-correspondenten-1900
+brieven-correspondenten-1900:
+	./bin/elabctl archive ./data/elab4-brieven-correspondenten-1900.war
+	xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/entry-0001-1892_03_07.xml
+	#make brieven-correspondenten-1900-rsync
+
+.PHONY: brieven-correspondenten-1900-rsync
+brieven-correspondenten-1900-rsync:
+	rsync -rav build/zip/elab4-brieven-correspondenten-1900/* ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/tei/letters/
+	cd ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900 && (git commit -a -m "new elaborate export" && git push)
+
 .PHONY: help
 help:
 	@echo "make-tools for $(TAG)"
@@ -41,3 +52,5 @@ help:
 	@echo "  drafts-list   - to list the available drafts"
 	@echo "  editions-list - to list the available editions"
 	@echo
+	@echo "  brieven-correspondenten-1900 - to run the tei export for brieven-correspondenten-1900"
+#	@echo "  brieven-correspondenten-1900-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900"

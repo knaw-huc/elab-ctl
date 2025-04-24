@@ -11,9 +11,15 @@ import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.raise.either
-import nl.knaw.huc.di.elaborate.elabctl.archiver.ManifestV3Factory.FacsimileDimensions
 
 object FacsimileDimensionsFactory {
+
+    data class FacsimileDimensions(
+        val fileName: String,
+        val width: Int,
+        val height: Int
+    )
+
     fun readFacsimileDimensionsFromZipFilePath(zipFilePath: String): Sequence<FacsimileDimensions> =
         sequence {
             ZipFile(zipFilePath).use { zipFile ->

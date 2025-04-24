@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.elaborate.elabctl.archiver
+package nl.knaw.huc.di.elaborate.elabctl.manifests
 
 import info.freelibrary.iiif.presentation.v3.AnnotationPage
 import info.freelibrary.iiif.presentation.v3.Canvas
@@ -11,16 +11,14 @@ import info.freelibrary.iiif.presentation.v3.properties.Metadata
 import info.freelibrary.iiif.presentation.v3.properties.Value
 import info.freelibrary.iiif.presentation.v3.properties.behaviors.ManifestBehavior
 import info.freelibrary.iiif.presentation.v3.services.ImageService3
+import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
 
 class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
 
-    data class FacsimileDimensions(
-        val fileName: String,
-        val width: Int,
-        val height: Int
-    )
-
-    fun forEntry(entryName: String, facsimileDimensions: List<FacsimileDimensions>): Manifest {
+    fun forEntry(
+        entryName: String,
+        facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>
+    ): Manifest {
         val manifestId = "$manifestBaseUrl/$entryName-manifest.json"
         val manifest = Manifest(manifestId, Label("en", "Pages"))
             .setRights("http://creativecommons.org/licenses/by/4.0/")

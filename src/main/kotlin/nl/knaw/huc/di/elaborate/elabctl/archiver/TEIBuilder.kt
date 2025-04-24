@@ -3,6 +3,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.redundent.kotlin.xml.PrintOptions
+import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 import nl.knaw.huc.di.elaborate.elabctl.logger
 
@@ -20,14 +21,30 @@ object TEIBuilder {
 
     fun Entry.toTEI(teiName: String, projectName: String): String {
         val printOptions = PrintOptions(
-            singleLineTextElements = true,
+            singleLineTextElements = false,
             indent = "  ",
             useSelfClosingTags = true
         )
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
         return xml("TEI") {
+            processingInstruction("editem", Pair("template", "letter"))
+            processingInstruction(
+                "xml-model",
+                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
+                Pair("type", "application/xml"),
+                Pair("schematypens", "http://relaxng.org/ns/structure/1.0"),
+            )
+            processingInstruction(
+                "xml-model",
+                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
+                Pair("type", "application/xml"),
+                Pair("schematypens", "http://purl.oclc.org/dsdl/schematron"),
+            )
+            version = XmlVersion.V10
+            encoding = "UTF-8"
             xmlns = "http://www.tei-c.org/ns/1.0"
+            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem")
             "teiHeader" {
                 "fileDesc" {
                     "titleStmt" {
@@ -37,7 +54,7 @@ object TEIBuilder {
                     }
                     "publicationStmt" {
                         "publisher" {
-                            "name"{
+                            "name" {
                                 attribute("ref", "https://huygens.knaw.nl")
                                 -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
                             }
@@ -52,7 +69,7 @@ object TEIBuilder {
                     }
                     "sourceDesc" {
                         "msDesc" {
-                            "msIdentifier"{
+                            "msIdentifier" {
                                 "country"
                                 "settlement"
                                 "institution"
@@ -71,17 +88,12 @@ object TEIBuilder {
                     }
                 }
             }
-            "text" {
-                "interpGrp" {
-                    metadata
-                        .filter { it.value.isNotEmpty() }
-                        .forEach {
-                            "interp" {
-                                attribute("type", it.field.asType())
-                                -it.value
-                            }
-                        }
+            metadata
+                .filter { it.value.isNotEmpty() }
+                .forEach {
+                    comment("${it.field.asType()} = ${it.value}")
                 }
+            "text" {
                 "body" {
                     parallelTexts
                         .filter { it.value.text.isNotEmpty() }
@@ -98,6 +110,13 @@ object TEIBuilder {
                                 }
                             }
                         }
+                }
+            }
+            "standOff" {
+                "listAnnotation" {
+                    attribute("type", "notes")
+
+
                 }
             }
         }.toString(printOptions = printOptions)

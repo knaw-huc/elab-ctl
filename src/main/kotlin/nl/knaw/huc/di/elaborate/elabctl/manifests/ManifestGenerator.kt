@@ -5,7 +5,6 @@ import kotlin.io.path.appendLines
 import kotlin.io.path.writeLines
 import kotlin.io.path.writeText
 import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
-import nl.knaw.huc.di.elaborate.elabctl.archiver.ManifestV3Factory
 import nl.knaw.huc.di.elaborate.elabctl.logger
 
 object ManifestGenerator {

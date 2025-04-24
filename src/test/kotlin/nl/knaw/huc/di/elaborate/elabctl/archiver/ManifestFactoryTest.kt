@@ -1,6 +1,7 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import org.junit.jupiter.api.Test
+import nl.knaw.huc.di.elaborate.elabctl.manifests.ManifestV3Factory
 
 class ManifestFactoryTest {
 
