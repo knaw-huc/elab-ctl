@@ -90,16 +90,18 @@ object TEIBuilder {
                     "correspDesc" {
                         "correspAction" {
                             attribute("type", "sent")
-                            val sender = metadataMap["Afzender"] ?: ""
-                            val senderId = projectConfig.personIds[sender] ?: ""
-                            "rs" {
-                                if (senderId.isNotEmpty()) {
-                                    attribute("ref", "bio.xml#$senderId")
-                                }
-                                attribute("type", "person")
-                                -sender
+                            (metadataMap["Afzender"] ?: "").split("/", "-->", "#")
+                                .forEach { sender ->
+                                    val senderId = projectConfig.personIds[sender] ?: ""
+                                    "rs" {
+                                        if (senderId.isNotEmpty()) {
+                                            attribute("ref", "bio.xml#$senderId")
+                                        }
+                                        attribute("type", "person")
+                                        -sender
 //                                metadataMap[metadataMapping["sender"]]
-                            }
+                                    }
+                                }
                             "date" {
                                 attribute("when", metadataMap["Datum"] ?: "")
                                 -(metadataMap["Datum"] ?: "")
@@ -110,15 +112,17 @@ object TEIBuilder {
                         }
                         "correspAction" {
                             attribute("type", "received")
-                            val receiver = metadataMap["Ontvanger"] ?: ""
-                            val receiverId = projectConfig.personIds[receiver] ?: ""
-                            "rs" {
-                                if (receiverId.isNotEmpty()) {
-                                    attribute("ref", "bio.xml#$receiverId")
+                            (metadataMap["Ontvanger"] ?: "").split("/", "-->", "#")
+                                .forEach { receiver ->
+                                    val receiverId = projectConfig.personIds[receiver] ?: ""
+                                    "rs" {
+                                        if (receiverId.isNotEmpty()) {
+                                            attribute("ref", "bio.xml#$receiverId")
+                                        }
+                                        attribute("type", "person")
+                                        -receiver
+                                    }
                                 }
-                                attribute("type", "person")
-                                -receiver
-                            }
                         }
                     }
                 }
