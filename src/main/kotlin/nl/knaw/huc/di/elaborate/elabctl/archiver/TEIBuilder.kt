@@ -93,14 +93,25 @@ object TEIBuilder {
                             attribute("type", "sent")
                             (metadataMap["Afzender"] ?: "").split("/")
                                 .forEach { sender ->
-                                    val senderId = projectConfig.personIds[sender] ?: ""
+                                    val (person, org) = sender.biSplit("#")
+                                    val senderId = projectConfig.personIds[person] ?: ""
                                     "rs" {
                                         if (senderId.isNotEmpty()) {
                                             attribute("ref", "bio.xml#$senderId")
                                         }
                                         attribute("type", "person")
-                                        -sender
+                                        -person
 //                                metadataMap[metadataMapping["sender"]]
+                                    }
+                                    org?.let {
+                                        "rs" {
+                                            val orgId = ""
+                                            if (orgId.isNotEmpty()) {
+                                                attribute("ref", "orgs.xml#$orgId")
+                                            }
+                                            attribute("type", "org")
+                                            -org
+                                        }
                                     }
                                 }
                             "date" {
