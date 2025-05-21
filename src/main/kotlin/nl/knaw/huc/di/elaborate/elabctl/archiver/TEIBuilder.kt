@@ -19,7 +19,7 @@ object TEIBuilder {
         "sup" to "super"
     )
 
-    fun Entry.toTEI(teiName: String, projectName: String): String {
+    fun Entry.toTEI(teiName: String, projectName: String/*, metadataMapping: ProjectMetadataMapping*/): String {
         val printOptions = PrintOptions(
             singleLineTextElements = false,
             indent = "  ",
@@ -27,15 +27,17 @@ object TEIBuilder {
         )
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
+        val metadataMap = metadata.associate { it.field to it.value }
+
         return xml("TEI") {
-            processingInstruction("editem", Pair("template", "letter"))
-            processingInstruction(
+            globalProcessingInstruction("editem", Pair("template", "letter"))
+            globalProcessingInstruction(
                 "xml-model",
                 Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
                 Pair("type", "application/xml"),
                 Pair("schematypens", "http://relaxng.org/ns/structure/1.0"),
             )
-            processingInstruction(
+            globalProcessingInstruction(
                 "xml-model",
                 Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
                 Pair("type", "application/xml"),
@@ -44,7 +46,7 @@ object TEIBuilder {
             version = XmlVersion.V10
             encoding = "UTF-8"
             xmlns = "http://www.tei-c.org/ns/1.0"
-            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem")
+            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
             "teiHeader" {
                 "fileDesc" {
                     "titleStmt" {
@@ -70,10 +72,41 @@ object TEIBuilder {
                     "sourceDesc" {
                         "msDesc" {
                             "msIdentifier" {
-                                "country"
-                                "settlement"
-                                "institution"
-                                "idno"
+                                "country" {}
+                                "settlement" {}
+                                "institution" {}
+                                "idno" {}
+                            }
+                        }
+                        "physDesc" {
+                            "objectDesc" {
+                                attribute("form", "letter")
+                            }
+                        }
+                    }
+                }
+                "profileDesc" {
+                    "correspDesc" {
+                        "correspAction" {
+                            attribute("type", "sent")
+                            "rs" {
+                                attribute("type", "person")
+                                -(metadataMap["Afzender"] ?: "")
+//                                metadataMap[metadataMapping["sender"]]
+                            }
+                            "date" {
+                                attribute("when", metadataMap["Datum"] ?: "")
+                                -(metadataMap["Datum"] ?: "")
+                            }
+                            "placeName" {
+                                -(metadataMap["Plaats"] ?: "")
+                            }
+                        }
+                        "correspAction" {
+                            attribute("type", "received")
+                            "rs" {
+                                attribute("type", "person")
+                                -(metadataMap["Ontvanger"] ?: "")
                             }
                         }
                     }
@@ -115,7 +148,6 @@ object TEIBuilder {
             "standOff" {
                 "listAnnotation" {
                     attribute("type", "notes")
-
 
                 }
             }
