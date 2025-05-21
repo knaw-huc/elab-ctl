@@ -88,9 +88,10 @@ object TEIBuilder {
                 }
                 "profileDesc" {
                     "correspDesc" {
+                        val forwardDelimiter = "-->"
                         "correspAction" {
                             attribute("type", "sent")
-                            (metadataMap["Afzender"] ?: "").split("/", "-->", "#")
+                            (metadataMap["Afzender"] ?: "").split("/")
                                 .forEach { sender ->
                                     val senderId = projectConfig.personIds[sender] ?: ""
                                     "rs" {
@@ -110,9 +111,12 @@ object TEIBuilder {
                                 -(metadataMap["Plaats"] ?: "")
                             }
                         }
+                        val receiveString = metadataMap["Ontvanger"] ?: ""
+                        val (firstReceivers, forwardReceivers) = receiveString.biSplit(forwardDelimiter)
                         "correspAction" {
                             attribute("type", "received")
-                            (metadataMap["Ontvanger"] ?: "").split("/", "-->", "#")
+                            val (personReceivers, orgReceivers) = firstReceivers.biSplit("#")
+                            personReceivers.split("/")
                                 .forEach { receiver ->
                                     val receiverId = projectConfig.personIds[receiver] ?: ""
                                     "rs" {
@@ -123,6 +127,49 @@ object TEIBuilder {
                                         -receiver
                                     }
                                 }
+                            orgReceivers?.let {
+                                it.split("/")
+                                    .forEach { receiver ->
+                                        "rs" {
+                                            val orgId = ""
+                                            if (orgId.isNotEmpty()) {
+                                                attribute("ref", "orgs.xml#$orgId")
+                                            }
+                                            attribute("type", "org")
+                                            -receiver
+                                        }
+                                    }
+                            }
+                        }
+                        forwardReceivers?.let {
+                            "correspAction" {
+                                attribute("type", "received-after-forward")
+                                val (personReceivers, orgReceivers) = forwardReceivers.biSplit("#")
+                                personReceivers.split("/")
+                                    .forEach { receiver ->
+                                        val receiverId = projectConfig.personIds[receiver] ?: ""
+                                        "rs" {
+                                            if (receiverId.isNotEmpty()) {
+                                                attribute("ref", "bio.xml#$receiverId")
+                                            }
+                                            attribute("type", "person")
+                                            -receiver
+                                        }
+                                    }
+                                orgReceivers?.let {
+                                    it.split("/")
+                                        .forEach { receiver ->
+                                            "rs" {
+                                                val orgId = ""
+                                                if (orgId.isNotEmpty()) {
+                                                    attribute("ref", "orgs.xml#$orgId")
+                                                }
+                                                attribute("type", "org")
+                                                -receiver
+                                            }
+                                        }
+                                }
+                            }
                         }
                     }
                 }
@@ -167,6 +214,15 @@ object TEIBuilder {
                 }
             }
         }.toString(printOptions = printOptions)
+    }
+
+    private fun String.biSplit(delimiter: String): Pair<String, String?> {
+        val parts = split(delimiter)
+        return if (parts.size == 1) {
+            Pair(this, null)
+        } else {
+            Pair(parts[0], parts[1])
+        }
     }
 
     private fun String.transform(annotationMap: Map<Long, AnnotationData>): String {
