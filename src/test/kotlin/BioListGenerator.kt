@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.apache.logging.log4j.kotlin.logger
 import org.redundent.kotlin.xml.Node
+import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 
@@ -153,9 +154,8 @@ object App {
                 }
                 "note" {
                     attribute("type", "longdesc")
-                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
+//                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
                     unsafeText(person.notities.replace("</p> ", "</p>\n"))
-
                 }
             }
             personXmlNodes.add(xml)
@@ -178,7 +178,7 @@ object App {
             version = XmlVersion.V10
             encoding = "UTF-8"
             xmlns = "http://www.tei-c.org/ns/1.0"
-            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
+//            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
             "teiHeader" {
                 "fileDesc" {
                 }
@@ -200,7 +200,7 @@ object App {
 
         val bioPath = "out/bio.xml"
         logger.info { "=> $bioPath" }
-        Path(bioPath).writeText(xml.toString(true))
+        Path(bioPath).writeText(xml.toString(PrintOptions(singleLineTextElements = true, indent = "  ")))
 
     }
 

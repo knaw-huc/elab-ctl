@@ -19,15 +19,16 @@ object TEIBuilder {
         "sup" to "super"
     )
 
-    fun Entry.toTEI(teiName: String, projectName: String/*, metadataMapping: ProjectMetadataMapping*/): String {
+    fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig): String {
         val printOptions = PrintOptions(
-            singleLineTextElements = false,
+            singleLineTextElements = true,
             indent = "  ",
             useSelfClosingTags = true
         )
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
         val metadataMap = metadata.associate { it.field to it.value }
+        val projectName = projectConfig.projectName
 
         return xml("TEI") {
             globalProcessingInstruction("editem", Pair("template", "letter"))
@@ -46,7 +47,7 @@ object TEIBuilder {
             version = XmlVersion.V10
             encoding = "UTF-8"
             xmlns = "http://www.tei-c.org/ns/1.0"
-            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
+//            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
             "teiHeader" {
                 "fileDesc" {
                     "titleStmt" {
@@ -89,9 +90,14 @@ object TEIBuilder {
                     "correspDesc" {
                         "correspAction" {
                             attribute("type", "sent")
+                            val sender = metadataMap["Afzender"] ?: ""
+                            val senderId = projectConfig.personIds[sender] ?: ""
                             "rs" {
+                                if (senderId.isNotEmpty()) {
+                                    attribute("ref", "bio.xml#$senderId")
+                                }
                                 attribute("type", "person")
-                                -(metadataMap["Afzender"] ?: "")
+                                -sender
 //                                metadataMap[metadataMapping["sender"]]
                             }
                             "date" {
@@ -104,9 +110,14 @@ object TEIBuilder {
                         }
                         "correspAction" {
                             attribute("type", "received")
+                            val receiver = metadataMap["Ontvanger"] ?: ""
+                            val receiverId = projectConfig.personIds[receiver] ?: ""
                             "rs" {
+                                if (receiverId.isNotEmpty()) {
+                                    attribute("ref", "bio.xml#$receiverId")
+                                }
                                 attribute("type", "person")
-                                -(metadataMap["Ontvanger"] ?: "")
+                                -receiver
                             }
                         }
                     }

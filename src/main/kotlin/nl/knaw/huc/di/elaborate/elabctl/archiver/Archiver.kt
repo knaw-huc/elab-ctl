@@ -10,6 +10,8 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,6 +27,10 @@ object Archiver {
     fun archive(warPaths: List<String>) {
         warPaths.forEach { warPath ->
             val projectName = warPath.split('/').last().replace(".war", "")
+            val projectConfig = ProjectConfig(
+                projectName = projectName.replace("elab4-", ""),
+                personIds = loadPersonIdMap(projectName)
+            )
             File("build/zip/$projectName").deleteRecursively()
             File("build/zip/$projectName").mkdirs()
             File("out").mkdirs()
@@ -62,7 +68,7 @@ object Archiver {
                         })
 
 //                logger.info { entry.metadata }
-                        val tei = entry.toTEI(teiName, projectName.replace("elab4-", ""))
+                        val tei = entry.toTEI(teiName, projectConfig)
                         val teiPath = "build/zip/$projectName/${teiName}.xml"
                         logger.info { "=> $teiPath" }
                         Path(teiPath).writeText(tei)
@@ -72,6 +78,17 @@ object Archiver {
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)
             storeScriptLines(scriptLines)
+        }
+    }
+
+    private fun loadPersonIdMap(projectName: String): Map<String, String> {
+        val path = "data/$projectName/person-ids.json"
+        val src = File(path)
+        return if (src.exists()) {
+            logger.info { "<= $path" }
+            jacksonObjectMapper().readValue(src)
+        } else {
+            emptyMap()
         }
     }
 
