@@ -89,44 +89,13 @@ object TEIBuilder {
                 }
                 "profileDesc" {
                     "correspDesc" {
-                        val forwardDelimiter = "-->"
-                        "correspAction" {
-                            attribute("type", "sent")
-                            (metadataMap["Afzender"] ?: "").split("/")
-                                .forEach { sender ->
-                                    val (person, org) = sender.biSplit("#")
-                                    personRsNode(projectConfig, person)
-                                    org?.let { orgRsNode(org) }
-                                }
-                            "date" {
-                                attribute("when", metadataMap["Datum"] ?: "")
-                                -(metadataMap["Datum"] ?: "")
-                            }
-                            "placeName" {
-                                -(metadataMap["Plaats"] ?: "")
-                            }
-                        }
+                        sentCorrespActionNode(projectConfig, metadataMap)
+
                         val receiveString = metadataMap["Ontvanger"] ?: ""
-                        val (firstReceivers, forwardReceivers) = receiveString.biSplit(forwardDelimiter)
-                        "correspAction" {
-                            attribute("type", "received")
-                            val (personReceivers, orgReceivers) = firstReceivers.biSplit("#")
-                            personReceivers.split("/")
-                                .forEach { receiver -> personRsNode(projectConfig, receiver) }
-                            orgReceivers?.let {
-                                it.split("/").forEach { orgRsNode(it) }
-                            }
-                        }
+                        val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
+                        correspActionNode(projectConfig, "received", firstReceivers)
                         forwardReceivers?.let {
-                            "correspAction" {
-                                attribute("type", "received-after-forward")
-                                val (personReceivers, orgReceivers) = forwardReceivers.biSplit("#")
-                                personReceivers.split("/")
-                                    .forEach { receiver -> personRsNode(projectConfig, receiver) }
-                                orgReceivers?.let {
-                                    it.split("/").forEach { orgRsNode(it) }
-                                }
-                            }
+                            correspActionNode(projectConfig, "received-after-forward", forwardReceivers)
                         }
                     }
                 }
@@ -171,6 +140,47 @@ object TEIBuilder {
                 }
             }
         }.toString(printOptions = printOptions)
+    }
+
+    private fun Node.correspActionNode(
+        projectConfig: ProjectConfig,
+        type: String,
+        correspondentString: String
+    ) {
+        val (personReceivers, orgReceivers) = correspondentString.biSplit("#")
+        "correspAction" {
+            attribute("type", type)
+            personReceivers.split("/")
+                .forEach { personRsNode(projectConfig, it) }
+            orgReceivers?.let {
+                it.split("/").forEach { orgRsNode(it) }
+            }
+        }
+    }
+
+    private fun Node.sentCorrespActionNode(
+        projectConfig: ProjectConfig,
+        metadataMap: Map<String, String>
+    ) {
+        val senders = (metadataMap["Afzender"] ?: "").split("/")
+        val date = metadataMap["Datum"] ?: ""
+        val place = metadataMap["Plaats"] ?: ""
+        "correspAction" {
+            attribute("type", "sent")
+            senders
+                .forEach { sender ->
+                    val (person, org) = sender.biSplit("#")
+                    personRsNode(projectConfig, person)
+                    org?.let { orgRsNode(org) }
+                }
+            "date" {
+                attribute("when", date)
+                -date
+            }
+            "placeName" {
+                -place
+            }
+        }
     }
 
     private fun Node.personRsNode(
