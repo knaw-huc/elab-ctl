@@ -2,6 +2,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
@@ -94,25 +95,8 @@ object TEIBuilder {
                             (metadataMap["Afzender"] ?: "").split("/")
                                 .forEach { sender ->
                                     val (person, org) = sender.biSplit("#")
-                                    val senderId = projectConfig.personIds[person] ?: ""
-                                    "rs" {
-                                        if (senderId.isNotEmpty()) {
-                                            attribute("ref", "bio.xml#$senderId")
-                                        }
-                                        attribute("type", "person")
-                                        -person
-//                                metadataMap[metadataMapping["sender"]]
-                                    }
-                                    org?.let {
-                                        "rs" {
-                                            val orgId = ""
-                                            if (orgId.isNotEmpty()) {
-                                                attribute("ref", "orgs.xml#$orgId")
-                                            }
-                                            attribute("type", "org")
-                                            -org
-                                        }
-                                    }
+                                    personRsNode(projectConfig, person)
+                                    org?.let { orgRsNode(org) }
                                 }
                             "date" {
                                 attribute("when", metadataMap["Datum"] ?: "")
@@ -128,28 +112,9 @@ object TEIBuilder {
                             attribute("type", "received")
                             val (personReceivers, orgReceivers) = firstReceivers.biSplit("#")
                             personReceivers.split("/")
-                                .forEach { receiver ->
-                                    val receiverId = projectConfig.personIds[receiver] ?: ""
-                                    "rs" {
-                                        if (receiverId.isNotEmpty()) {
-                                            attribute("ref", "bio.xml#$receiverId")
-                                        }
-                                        attribute("type", "person")
-                                        -receiver
-                                    }
-                                }
+                                .forEach { receiver -> personRsNode(projectConfig, receiver) }
                             orgReceivers?.let {
-                                it.split("/")
-                                    .forEach { receiver ->
-                                        "rs" {
-                                            val orgId = ""
-                                            if (orgId.isNotEmpty()) {
-                                                attribute("ref", "orgs.xml#$orgId")
-                                            }
-                                            attribute("type", "org")
-                                            -receiver
-                                        }
-                                    }
+                                it.split("/").forEach { orgRsNode(it) }
                             }
                         }
                         forwardReceivers?.let {
@@ -157,28 +122,9 @@ object TEIBuilder {
                                 attribute("type", "received-after-forward")
                                 val (personReceivers, orgReceivers) = forwardReceivers.biSplit("#")
                                 personReceivers.split("/")
-                                    .forEach { receiver ->
-                                        val receiverId = projectConfig.personIds[receiver] ?: ""
-                                        "rs" {
-                                            if (receiverId.isNotEmpty()) {
-                                                attribute("ref", "bio.xml#$receiverId")
-                                            }
-                                            attribute("type", "person")
-                                            -receiver
-                                        }
-                                    }
+                                    .forEach { receiver -> personRsNode(projectConfig, receiver) }
                                 orgReceivers?.let {
-                                    it.split("/")
-                                        .forEach { receiver ->
-                                            "rs" {
-                                                val orgId = ""
-                                                if (orgId.isNotEmpty()) {
-                                                    attribute("ref", "orgs.xml#$orgId")
-                                                }
-                                                attribute("type", "org")
-                                                -receiver
-                                            }
-                                        }
+                                    it.split("/").forEach { orgRsNode(it) }
                                 }
                             }
                         }
@@ -225,6 +171,31 @@ object TEIBuilder {
                 }
             }
         }.toString(printOptions = printOptions)
+    }
+
+    private fun Node.personRsNode(
+        projectConfig: ProjectConfig,
+        personName: String
+    ) {
+        val personId = projectConfig.personIds[personName] ?: ""
+        "rs" {
+            if (personId.isNotEmpty()) {
+                attribute("ref", "bio.xml#$personId")
+            }
+            attribute("type", "person")
+            -personName
+        }
+    }
+
+    private fun Node.orgRsNode(org: String) {
+        val orgId = ""
+        "rs" {
+            if (orgId.isNotEmpty()) {
+                attribute("ref", "orgs.xml#$orgId")
+            }
+            attribute("type", "org")
+            -org
+        }
     }
 
     private fun String.biSplit(delimiter: String): Pair<String, String?> {
