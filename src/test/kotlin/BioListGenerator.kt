@@ -148,6 +148,12 @@ object App {
                     attribute("type", "shortdesc")
                     -person.shortDescription
                 }
+                "note" {
+                    attribute("type", "longdesc")
+                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
+                    unsafeText(person.notities.replace("</p> ", "</p>\n"))
+
+                }
             }
             personXmlNodes.add(xml)
         }
