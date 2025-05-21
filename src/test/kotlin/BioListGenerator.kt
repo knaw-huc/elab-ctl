@@ -144,6 +144,10 @@ object App {
                 person.deathDate?.let {
                     "death" { attribute("when", it) }
                 }
+                "note" {
+                    attribute("type", "shortdesc")
+                    -person.shortDescription
+                }
             }
             personXmlNodes.add(xml)
         }
