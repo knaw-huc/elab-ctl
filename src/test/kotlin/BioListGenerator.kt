@@ -125,40 +125,40 @@ object App {
                 else -> """pers${(i + 1).toString().padStart(3, '0')}"""
             }
             koppelnaamToPersonId[person.koppelnaam] = xmlId
-            val xml = xml("person") {
-                attribute("xml:id", xmlId)
-                attribute("sex", person.sex())
-                person.source()?.let { attribute("source", it) }
-                person.names.forEach { name ->
-                    val forename = name.nameComponent("FORENAME")
-                    val surname = name.nameComponent("SURNAME")
-                    val genName = name.nameComponent("GEN_NAME")
-                    val nameLink = name.nameComponent("NAME_LINK")
-                    "persName" {
-                        attribute("full", "yes")
-                        forename?.let { "forename" { -it } }
-                        nameLink?.let { "nameLink" { -it } }
-                        surname?.let { "surname" { -it } }
-                        genName?.let { "addname" { -it } }
+            personXmlNodes.add(
+                xml("person") {
+                    attribute("xml:id", xmlId)
+                    attribute("sex", person.sex())
+                    person.source()?.let { attribute("source", it) }
+                    person.names.forEach { name ->
+                        val forename = name.nameComponent("FORENAME")
+                        val surname = name.nameComponent("SURNAME")
+                        val genName = name.nameComponent("GEN_NAME")
+                        val nameLink = name.nameComponent("NAME_LINK")
+                        "persName" {
+                            attribute("full", "yes")
+                            forename?.let { "forename" { -it } }
+                            nameLink?.let { "nameLink" { -it } }
+                            surname?.let { "surname" { -it } }
+                            genName?.let { "addname" { -it } }
+                        }
                     }
-                }
-                person.birthDate?.let {
-                    "birth" { attribute("when", it) }
-                }
-                person.deathDate?.let {
-                    "death" { attribute("when", it) }
-                }
-                "note" {
-                    attribute("type", "shortdesc")
-                    -person.shortDescription
-                }
-                "note" {
-                    attribute("type", "longdesc")
+                    person.birthDate?.let {
+                        "birth" { attribute("when", it) }
+                    }
+                    person.deathDate?.let {
+                        "death" { attribute("when", it) }
+                    }
+                    "note" {
+                        attribute("type", "shortdesc")
+                        -person.shortDescription
+                    }
+                    "note" {
+                        attribute("type", "longdesc")
 //                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
-                    unsafeText(person.notities.replace("</p> ", "</p>\n"))
-                }
-            }
-            personXmlNodes.add(xml)
+                        unsafeText(person.notities.replace("</p> ", "</p>\n"))
+                    }
+                })
         }
 
         val xml = xml("TEI") {
@@ -221,12 +221,13 @@ object App {
 
     private fun Person.sex(): Int = genderToSex[gender] ?: 9
 
-    private fun Person.source(): String? =
-        when {
-            dbnlUrl.isNotEmpty() -> dbnlUrl
-            biodesurl.isNotEmpty() -> biodesurl
-            else -> null
+    private fun Person.source(): String? {
+        val source = listOf(dbnlUrl, biodesurl).filter { it.isNotEmpty() }.joinToString(" ")
+        return when (source) {
+            " " -> null
+            else -> source
         }
+    }
 
 }
 
