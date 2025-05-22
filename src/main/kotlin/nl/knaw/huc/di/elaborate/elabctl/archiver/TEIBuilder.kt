@@ -189,10 +189,10 @@ object TEIBuilder {
     ) {
         val personId = projectConfig.personIds[personName] ?: ""
         "rs" {
+            attribute("type", "person")
             if (personId.isNotEmpty()) {
                 attribute("ref", "bio.xml#$personId")
             }
-            attribute("type", "person")
             -personName
         }
     }
@@ -200,10 +200,10 @@ object TEIBuilder {
     private fun Node.orgRsNode(org: String) {
         val orgId = ""
         "rs" {
+            attribute("type", "org")
             if (orgId.isNotEmpty()) {
                 attribute("ref", "orgs.xml#$orgId")
             }
-            attribute("type", "org")
             -org
         }
     }
