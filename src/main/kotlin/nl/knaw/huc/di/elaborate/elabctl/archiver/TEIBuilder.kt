@@ -2,6 +2,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import arrow.atomic.AtomicInt
 import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
@@ -127,10 +128,16 @@ object TEIBuilder {
                             val lang = metadataMap["Taal"]?.asIsoLang() ?: "nl"
                             val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
                             val annotationMap = textLayer.annotationData.associateBy { it.n }
-                            val text = textLayer.text.transform(annotationMap).setPageBreaks(divType, lang)
+                            val text = textLayer.text
+                                .transform(annotationMap)
+                                .removeLineBreaks()
+                                .convertVerticalSpace()
+                                .setParagraphs(divType, lang)
+                                .setPageBreaks(divType, lang)
                             "div" {
                                 attribute("type", divType)
                                 attribute("xml:lang", lang)
+                                -"\n"
                                 if (text.contains("</p>")) {
                                     unsafeText(text)
                                 } else {
@@ -139,6 +146,7 @@ object TEIBuilder {
                                         unsafeText(text)
                                     }
                                 }
+                                -"\n"
                             }
                         }
                 }
@@ -253,8 +261,32 @@ object TEIBuilder {
             else -> "nl"
         }
 
+    private fun String.removeLineBreaks(): String =
+        this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
+
+    private fun String.convertVerticalSpace(): String =
+        this.replace(Regex("\n\\s*\n"), "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n")
+
+    private fun String.setParagraphs(divType: String, lang: String): String {
+        val paraCounter = AtomicInt(1)
+        return this.split("\n")
+            .joinToString("\n") {
+                if (it.contains("<space ")) {
+                    it
+                } else {
+                    val n = paraCounter.andIncrement
+                    val indent = if (it.startsWith(" ")) {
+                        " rend=\"indent\""
+                    } else {
+                        ""
+                    }
+                    "<p xml:id=\"p.$divType.$lang.$n\" n=\"$n\"$indent>${it.trim()}</p>"
+                }
+            }
+    }
+
     private fun String.setPageBreaks(divType: String, lang: String): String =
-        split("""<hi rend="bold">¶</hi>""")
+        this.split("""<hi rend="bold">¶</hi>""")
             .mapIndexed { i, t ->
                 if (i == 0) {
                     t
