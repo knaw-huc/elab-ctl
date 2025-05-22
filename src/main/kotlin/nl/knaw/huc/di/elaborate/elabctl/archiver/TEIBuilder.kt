@@ -77,8 +77,8 @@ object TEIBuilder {
                             "msIdentifier" {
                                 "country" {}
                                 "settlement" {}
-                                "institution" {}
-                                "idno" {}
+                                "institution" { }
+                                "idno" { -(metadataMap["Signatuur"] ?: "") }
                             }
                         }
                         "physDesc" {
