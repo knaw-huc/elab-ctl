@@ -181,8 +181,29 @@ object App {
 //            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
             "teiHeader" {
                 "fileDesc" {
-                }
-                "profileDesc" {
+                    "titleStmt" {
+                        "title" {
+                            attribute("xml:lang", "nl")
+                            -"Brieven en Correspondenten rond 1900"
+                        }
+                    }
+                    "publicationStmt" {
+                        "publisher" {
+                            "name" {
+                                attribute("ref", "https://huygens.knaw.nl/en")
+                                -"Huygens Institute for the History and Culture of the Netherlands (KNAW)"
+                            }
+                        }
+                        "pubPlace" {}
+                        "date" {
+                            attribute("when", "2016-08-02")
+                            -"2016-08-02"
+                        }
+                    }
+                    "sourceDesc" {
+                        "p" { -"N.A." }
+
+                    }
                 }
             }
             "text" {
