@@ -119,6 +119,7 @@ object TEIBuilder {
                 .forEach {
                     comment("${it.field.asType()} = ${it.value}")
                 }
+            val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
             "text" {
                 "body" {
                     parallelTexts
@@ -127,9 +128,10 @@ object TEIBuilder {
                         .forEach { (layerName, textLayer) ->
                             val lang = metadataMap["Taal"]?.asIsoLang() ?: "nl"
                             val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
-                            val annotationMap = textLayer.annotationData.associateBy { it.n }
+                            val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
+                            annotationMap.putAll(layerAnnotationMap)
                             val text = textLayer.text
-                                .transform(annotationMap)
+                                .transform(layerAnnotationMap)
                                 .removeLineBreaks()
                                 .convertVerticalSpace()
                                 .setParagraphs(divType, lang)
@@ -151,10 +153,21 @@ object TEIBuilder {
                         }
                 }
             }
-            "standOff" {
-                "listAnnotation" {
-                    attribute("type", "notes")
+            if (annotationMap.isNotEmpty()) {
+                val noteCounter = AtomicInt(1)
+                "standOff" {
+                    "listAnnotation" {
+                        attribute("type", "notes")
+                        annotationMap.forEach { id, data ->
+                            "note" {
+                                attribute("xml:id", "note_$id")
+                                attribute("n", noteCounter.andIncrement)
+                                comment("${data.type.name} / ${data.type.description}")
+                                "p" { -data.text }
+                            }
+                        }
 
+                    }
                 }
             }
         }.toString(printOptions = printOptions)

@@ -204,28 +204,8 @@ internal class TranscriptionVisitor(
                 val marker: String = element.getAttribute("data-marker")
                 val id: String = element.getAttribute("data-id")
                 if (marker == "end") {
-                    val key = id.toLong()
-                    val annotationData = annotationMap[key]!!
-                    val note = Element(
-                        "note",
-                        mapOf("xml:id" to "note_$id", "type" to annotationData.type.name.asType())
-                    )
-                    context.addOpenTag(note)
-                    val annotationMetadataMap: Map<String, String> = annotationData.type.metadata
-                    if (annotationMetadataMap.isNotEmpty()) {
-                        context.addOpenTag(INTERP_GRP)
-                        annotationMetadataMap.forEach { (type, value) ->
-                            val interp = Element("interp", mapOf("type" to type.asType()))
-                            context.addOpenTag(interp)
-                            context.addLiteral(value)
-                            context.addCloseTag("interp")
-                        }
-                        context.addCloseTag(INTERP_GRP)
-                    }
-                    val noteContent = annotationData.text.ifEmpty { annotationData.annotatedText }
-                    val fixedContent = AnnotationBodyConverter.convert(noteContent)
-                    context.addLiteral(fixedContent)
-                    context.addCloseTag(note)
+//                    addNoteElement(id, context)
+                    addPtrElement(id, context)
                 }
                 return STOP
             } else {
@@ -234,6 +214,39 @@ internal class TranscriptionVisitor(
                 openElements.push(hi)
                 return NEXT
             }
+        }
+
+        private fun addNoteElement(id: String, context: XmlContext) {
+            val key = id.toLong()
+            val annotationData = annotationMap[key]!!
+            val note = Element(
+                "note",
+                mapOf("xml:id" to "note_$id", "type" to annotationData.type.name.asType())
+            )
+            context.addOpenTag(note)
+            val annotationMetadataMap: Map<String, String> = annotationData.type.metadata
+            if (annotationMetadataMap.isNotEmpty()) {
+                context.addOpenTag(INTERP_GRP)
+                annotationMetadataMap.forEach { (type, value) ->
+                    val interp = Element("interp", mapOf("type" to type.asType()))
+                    context.addOpenTag(interp)
+                    context.addLiteral(value)
+                    context.addCloseTag("interp")
+                }
+                context.addCloseTag(INTERP_GRP)
+            }
+            val noteContent = annotationData.text.ifEmpty { annotationData.annotatedText }
+            val fixedContent = AnnotationBodyConverter.convert(noteContent)
+            context.addLiteral(fixedContent)
+            context.addCloseTag(note)
+        }
+
+        private fun addPtrElement(id: String, context: XmlContext) {
+            val ptr = Element(
+                "ptr",
+                mapOf("target" to "#note_$id")
+            )
+            context.addEmptyElementTag(ptr)
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
