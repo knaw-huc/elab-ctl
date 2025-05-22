@@ -300,7 +300,8 @@ object TEIBuilder {
     }
 
     private fun String.setPageBreaks(divType: String, lang: String): String =
-        this.split("""<hi rend="bold">¶</hi>""")
+        this.replace("""<hi rend="bold"><hi rend="bold">¶</hi></hi>""", """<hi rend="bold">¶</hi>""")
+            .split("""<hi rend="bold">¶</hi>""")
             .mapIndexed { i, t ->
                 if (i == 0) {
                     t
@@ -315,19 +316,19 @@ object TEIBuilder {
         this.trim()
             .split("\n")
             .forEach { line ->
-                val words = line.split(" ")
                 var currentLineLength = 0
-                for (word in words) {
-                    if (currentLineLength + word.length > width) {
-                        result.append("\n")
-                        currentLineLength = 0
-                    } else if (currentLineLength > 0) {
-                        result.append(" ")
-                        currentLineLength++
+                line.split(" ")
+                    .forEach { word ->
+                        if (currentLineLength + word.length > width) {
+                            result.append("\n")
+                            currentLineLength = 0
+                        } else if (currentLineLength > 0) {
+                            result.append(" ")
+                            currentLineLength++
+                        }
+                        result.append(word)
+                        currentLineLength += word.length
                     }
-                    result.append(word)
-                    currentLineLength += word.length
-                }
                 result.append("\n")
             }
         return result.toString().trim()
