@@ -103,8 +103,12 @@ object TEIBuilder {
             if (facsimiles.isNotEmpty()) {
                 "facsimile" {
                     facsimiles.forEachIndexed { i, _ ->
-                        "graphic" {
-                            attribute("url", "$teiName-${(i + 1).toString().padStart(2, '0')}.jp2")
+                        "surface" {
+                            attribute("n", "${i + 1}")
+                            attribute("xml:id", "s${i + 1}")
+                            "graphic" {
+                                attribute("url", "$teiName-${(i + 1).toString().padStart(2, '0')}")
+                            }
                         }
                     }
                 }
@@ -120,14 +124,20 @@ object TEIBuilder {
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
+                            val lang = metadataMap["Taal"]?.asIsoLang() ?: "nl"
+                            val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
                             val annotationMap = textLayer.annotationData.associateBy { it.n }
-                            val text = textLayer.text.transform(annotationMap)
+                            val text = textLayer.text.transform(annotationMap).setPageBreaks(divType, lang)
                             "div" {
-                                attribute("type", layerName)
+                                attribute("type", divType)
+                                attribute("xml:lang", lang)
                                 if (text.contains("</p>")) {
                                     unsafeText(text)
                                 } else {
-                                    "p" { unsafeText(text) }
+                                    "p" {
+                                        attribute("xml:id", "p.$divType.$lang.1")
+                                        unsafeText(text)
+                                    }
                                 }
                             }
                         }
@@ -233,5 +243,25 @@ object TEIBuilder {
             .replace(" </hi>", "</hi> ")
             .replace("</p>", "</p>\n")
     }
+
+    private fun String.asIsoLang() =
+        when {
+            contains("Nederlands") -> "nl"
+            contains("Duits") -> "ge"
+            contains("Engels") -> "en"
+            contains("Frans") -> "fr"
+            else -> "nl"
+        }
+
+    private fun String.setPageBreaks(divType: String, lang: String): String =
+        split("""<hi rend="bold">¶</hi>""")
+            .mapIndexed { i, t ->
+                if (i == 0) {
+                    t
+                } else {
+                    "\n<pb xml:id=\"pb.$divType.$lang.$i\" f=\"$i\" facs=\"#s$i\" n=\"$i\"/>\n$t"
+                }
+            }
+            .joinToString("")
 
 }

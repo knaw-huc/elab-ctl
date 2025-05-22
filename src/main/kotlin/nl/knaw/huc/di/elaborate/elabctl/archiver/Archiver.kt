@@ -29,7 +29,8 @@ object Archiver {
             val projectName = warPath.split('/').last().replace(".war", "")
             val projectConfig = ProjectConfig(
                 projectName = projectName.replace("elab4-", ""),
-                personIds = loadPersonIdMap(projectName)
+                personIds = loadPersonIdMap(projectName),
+                divTypeForLayerName = mapOf("Transcription" to "original")
             )
             File("build/zip/$projectName").deleteRecursively()
             File("build/zip/$projectName").mkdirs()
