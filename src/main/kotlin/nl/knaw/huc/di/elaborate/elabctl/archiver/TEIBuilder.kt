@@ -103,10 +103,11 @@ object TEIBuilder {
             }
             if (facsimiles.isNotEmpty()) {
                 "facsimile" {
-                    facsimiles.forEachIndexed { i, _ ->
+                    facsimiles.forEachIndexed { i, facs ->
                         "surface" {
                             attribute("n", "${i + 1}")
                             attribute("xml:id", "s${i + 1}")
+                            comment(facs.title)
                             "graphic" {
                                 attribute("url", "$teiName-${(i + 1).toString().padStart(2, '0')}")
                             }
