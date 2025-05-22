@@ -137,6 +137,7 @@ object TEIBuilder {
                                 .convertVerticalSpace()
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang)
+                                .wrapLines(80)
                             "div" {
                                 attribute("type", divType)
                                 attribute("xml:lang", lang)
@@ -149,7 +150,6 @@ object TEIBuilder {
                                         unsafeText(text)
                                     }
                                 }
-                                -"\n"
                             }
                         }
                 }
@@ -309,5 +309,28 @@ object TEIBuilder {
                 }
             }
             .joinToString("")
+
+    private fun String.wrapLines(width: Int): String {
+        val result = StringBuilder()
+        this.trim()
+            .split("\n")
+            .forEach { line ->
+                val words = line.split(" ")
+                var currentLineLength = 0
+                for (word in words) {
+                    if (currentLineLength + word.length > width) {
+                        result.append("\n")
+                        currentLineLength = 0
+                    } else if (currentLineLength > 0) {
+                        result.append(" ")
+                        currentLineLength++
+                    }
+                    result.append(word)
+                    currentLineLength += word.length
+                }
+                result.append("\n")
+            }
+        return result.toString().trim()
+    }
 
 }
