@@ -251,16 +251,19 @@ object TEIBuilder {
 
     private fun String.transform(annotationMap: Map<Long, AnnotationData>): String {
         val visitor = TranscriptionVisitor(annotationMap = annotationMap)
-        val prepared = replace("<br>", "<br/>\n").replace("\u00A0", " ")
-        val wrapped = wrapInXml(prepared)
+        val wrapped = replace("<br>", "<br/>\n")
+            .replace("<b> ", " <b>")
+            .replace(" </b>", "</b> ")
+            .replace("\u00A0", " ")
+            .wrapInXml()
         val doc = nl.knaw.huygens.tei.Document.createFromXml(wrapped, false)
         doc.accept(visitor)
         val result = visitor.context.result
-        if (!isWellFormed(result)) {
+        if (!result.isWellFormed()) {
             logger.error { "Bad XML in result:\n$result\n" }
             throw RuntimeException("Bad XML")
         }
-        return unwrapFromXml(result)
+        return result.unwrapFromXml()
             .replace("\u00A0", " ")
             .replace(" </hi>", "</hi> ")
             .replace("</p>", "</p>\n")

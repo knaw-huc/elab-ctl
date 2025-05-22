@@ -14,18 +14,18 @@ import nl.knaw.huc.di.elaborate.elabctl.logger
 private const val XML_CLOSE_TAG = "</xml>"
 private const val XML_OPEN_TAG = "<xml>"
 
-fun unwrapFromXml(xml: String): String =
-    xml.replaceFirst(XML_OPEN_TAG.toRegex(), "")
+fun String.unwrapFromXml(): String =
+    replaceFirst(XML_OPEN_TAG.toRegex(), "")
         .replaceFirst(XML_CLOSE_TAG.toRegex(), "")
         .replace("&apos;".toRegex(), "'")
 
-fun wrapInXml(xmlContent: String): String =
-    "$XML_OPEN_TAG$xmlContent$XML_CLOSE_TAG"
+fun String.wrapInXml(): String =
+    "$XML_OPEN_TAG${this}$XML_CLOSE_TAG"
 
-fun isWellFormed(body: String): Boolean {
+fun String.isWellFormed(): Boolean {
     try {
         val dh = DefaultHandler()
-        val stringReader = StringReader(body)
+        val stringReader = StringReader(this)
         val inputSource = InputSource(stringReader)
         SAXParserFactory
             .newInstance()
@@ -36,7 +36,7 @@ fun isWellFormed(body: String): Boolean {
         return false
     } catch (e1: SAXException) {
         e1.printStackTrace()
-        logger.error { "body=$body" }
+        logger.error { "body=${this}" }
         return false
     } catch (e: IOException) {
         e.printStackTrace()
@@ -45,14 +45,19 @@ fun isWellFormed(body: String): Boolean {
     return true
 }
 
-fun fixXhtml(badXml: String): String {
-    val doc = Jsoup.parse(badXml)
-    doc.outputSettings().indentAmount(0).prettyPrint(false).escapeMode(Entities.EscapeMode.xhtml).charset("UTF-8")
+fun String.fixXhtml(): String {
+    val doc = Jsoup.parse(this)
+    doc.outputSettings()
+        .indentAmount(0)
+        .prettyPrint(false)
+        .escapeMode(Entities.EscapeMode.xhtml)
+        .charset("UTF-8")
     return doc.body()
         .html()
         .replace(" />", "/>")
         .replace("\u00A0", "&#160;")
         .replace("<br>", "<br/>")
+        .replace("<b> ", " <b>")
     // return Jsoup.clean(badxml, Whitelist.relaxed());
 }
 

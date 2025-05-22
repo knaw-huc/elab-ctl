@@ -39,12 +39,12 @@ class TEIBuilderTest {
         )
         val visitor = TranscriptionVisitor(annotationMap = annotationMap)
         val prepared = text.replace("<br>", "<br/>\n")
-        val wrapped = wrapInXml(prepared)
+        val wrapped = prepared.wrapInXml()
         val doc = Document.createFromXml(wrapped, false)
         doc.accept(visitor)
         val context = visitor.context
         val result = context.result
-        println("result=" + unwrapFromXml(result))
-        assertTrue { isWellFormed(result) }
+        println("result=" + result.unwrapFromXml())
+        assertTrue { result.isWellFormed() }
     }
 }

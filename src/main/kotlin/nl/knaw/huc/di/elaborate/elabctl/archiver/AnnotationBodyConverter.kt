@@ -93,7 +93,7 @@ class AnnotationBodyConverter {
         val unhandledTags: TreeSet<String> = TreeSet()
         fun convert(xml: String): String {
 //            logger.info { "val xml=\"\"\"$xml\"\"\"\n" }
-            val fixedXml: String = fixXhtml(wrapInXml(xml))
+            val fixedXml: String = xml.wrapInXml().fixXhtml()
             try {
                 val document = Document.createFromXml(fixedXml, false)
 
