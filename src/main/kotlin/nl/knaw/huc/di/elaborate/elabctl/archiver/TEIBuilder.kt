@@ -324,8 +324,9 @@ object TEIBuilder {
     private fun String.setParagraphs(divType: String, lang: String): String {
         val paraCounter = AtomicInt(1)
         return this.split("\n")
+            .filter { it.isNotBlank() }
             .joinToString("\n") {
-                if (it.contains("<space ")) {
+                if (it.contains("<space ") || it == """<hi rend="bold">¶</hi>""") {
                     it
                 } else {
                     val n = paraCounter.andIncrement
