@@ -251,10 +251,24 @@ object TEIBuilder {
 
     private fun String.transform(annotationMap: Map<Long, AnnotationData>): String {
         val visitor = TranscriptionVisitor(annotationMap = annotationMap)
-        val wrapped = replace("<br>", "<br/>\n")
-            .replace("<b> ", " <b>")
-            .replace(" </b>", "</b> ")
+        val wrapped = this
+            .replaceWhileFound(" <br>", "<br>")
+            .replaceWhileFound("<b><br>", "<br><b>")
+            .replaceWhileFound("<br></b>", "</b><br>")
+            .replaceWhileFound("<u><br>", "<br><u>")
+            .replaceWhileFound("<br></u>", "</u><br>")
+            .replaceWhileFound("<i><br>", "<br><i>")
+            .replaceWhileFound("<br></i>", "</i><br>")
+            .replaceWhileFound("<b><b>¶</b><br>", "<b>¶</b><br><b>")
+            .replaceWhileFound("<b><b>¶</b></b>", "<b>¶</b>")
+            .replaceWhileFound("<b> ", " <b>")
+            .replaceWhileFound(" </b>", "</b> ")
+            .replaceWhileFound("<i></i>", "")
+            .replaceWhileFound("<u></u>", "")
+            .replaceWhileFound("<b></b>", "")
+            .replace("<br>", "<br/>\n")
             .replace("\u00A0", " ")
+            .trim()
             .wrapInXml()
         val doc = nl.knaw.huygens.tei.Document.createFromXml(wrapped, false)
         doc.accept(visitor)
@@ -267,6 +281,14 @@ object TEIBuilder {
             .replace("\u00A0", " ")
             .replace(" </hi>", "</hi> ")
             .replace("</p>", "</p>\n")
+    }
+
+    private fun String.replaceWhileFound(oldValue: String, newValue: String): String {
+        var string = this
+        while (string.contains(oldValue)) {
+            string = string.replace(oldValue, newValue)
+        }
+        return string
     }
 
     private fun String.asIsoLang() =

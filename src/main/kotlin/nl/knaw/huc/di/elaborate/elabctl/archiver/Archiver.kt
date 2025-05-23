@@ -71,6 +71,9 @@ object Archiver {
 //                logger.info { entry.metadata }
                         val tei = entry.toTEI(teiName, projectConfig)
                         val teiPath = "build/zip/$projectName/${teiName}.xml"
+                        if (!tei.isWellFormed()) {
+                            logger.error { "file $teiPath is NOT well-formed!" }
+                        }
                         logger.info { "=> $teiPath" }
                         Path(teiPath).writeText(tei)
                         logger.info { "" }
