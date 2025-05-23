@@ -169,7 +169,6 @@ object TEIBuilder {
                                 "p" { -data.text }
                             }
                         }
-
                     }
                 }
             }
@@ -187,7 +186,7 @@ object TEIBuilder {
             personReceivers.split("/")
                 .forEach { personRsNode(projectConfig, it) }
             orgReceivers?.let {
-                it.split("/").forEach { orgRsNode(it) }
+                it.split("/").forEach { org -> orgRsNode(org) }
             }
         }
     }

@@ -106,9 +106,9 @@ object Archiver {
             "cd /data/tmp &&" +
                     " if [ -f facsimiles.zip ] ; then rm facsimiles.zip; fi &&" +
                     " echo creating checksum file... &&" +
-                    " sha256sum \$(find facsimiles/ -type f | sort) > manifest-sha256.txt &&" +
+                    " sha256sum $(find facsimiles/ -type f | sort) > manifest-sha256.txt &&" +
                     " echo moving facsimiles to zip archive... &&" +
-                    " zip -r facsimiles.zip \$(find facsimiles/ -type f | sort) manifest-sha256.txt &&" +
+                    " zip -r facsimiles.zip $(find facsimiles/ -type f | sort) manifest-sha256.txt &&" +
                     " rm -rf /data/tmp/facsimiles manifest-sha256.txt"
         )
         val path = "out/copy-facsimiles.sh"
