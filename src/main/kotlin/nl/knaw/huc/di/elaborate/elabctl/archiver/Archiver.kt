@@ -25,6 +25,7 @@ object Archiver {
 
     @OptIn(ExperimentalSerializationApi::class)
     fun archive(warPaths: List<String>) {
+        val errors: MutableList<String> = mutableListOf()
         warPaths.forEach { warPath ->
             val projectName = warPath.split('/').last().replace(".war", "")
             val projectConfig = ProjectConfig(
@@ -72,7 +73,7 @@ object Archiver {
                         val tei = entry.toTEI(teiName, projectConfig)
                         val teiPath = "build/zip/$projectName/${teiName}.xml"
                         if (!tei.isWellFormed()) {
-                            logger.error { "file $teiPath is NOT well-formed!" }
+                            errors.add("file $teiPath is NOT well-formed!")
                         }
                         logger.info { "=> $teiPath" }
                         Path(teiPath).writeText(tei)
@@ -82,6 +83,10 @@ object Archiver {
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)
             storeScriptLines(scriptLines)
+            if (errors.isNotEmpty()) {
+                logger.error { "${errors.size} errors found:" }
+                errors.forEach { logger.error { it } }
+            }
         }
     }
 
