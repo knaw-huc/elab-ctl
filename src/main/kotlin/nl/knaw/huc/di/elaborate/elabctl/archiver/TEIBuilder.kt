@@ -139,6 +139,7 @@ object TEIBuilder {
                                 .setPageBreaks(divType, lang)
                                 .wrapLines(80)
                                 .wrapSpaceElementWithNewLines()
+                                .replace("\n\n\n", "\n\n")
                             "div" {
                                 attribute("type", divType)
                                 attribute("xml:lang", lang)
@@ -254,6 +255,9 @@ object TEIBuilder {
         val visitor = TranscriptionVisitor(annotationMap = annotationMap)
         val wrapped = this
             .replace("\u00A0", " ")
+            .replace("&nbsp;", " ")
+            .replace(Regex(" +"), " ")
+
             .replaceWhileFound(" <br>", "<br>")
 
             .replaceWhileFound("<b><br>", "<br><b>")
@@ -282,6 +286,7 @@ object TEIBuilder {
 
             .replaceWhileFound("<b><b>¶</b><br>", "<b>¶</b><br><b>")
             .replaceWhileFound("<b><b>¶</b></b>", "<b>¶</b>")
+            .replace("<br><b>¶</b>", "<br><b>¶</b><br>")
 
             .replace("<br>", "<br/>\n")
             .trim()
@@ -329,12 +334,13 @@ object TEIBuilder {
             SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
         )
 
+    const val ENCODED_PAGE_BREAK = """<hi rend="bold">¶</hi>"""
     private fun String.setParagraphs(divType: String, lang: String): String {
         val paraCounter = AtomicInt(1)
         return this.split("\n")
             .filter { it.isNotBlank() }
             .joinToString("\n") {
-                if (it.startsWith("<space ") || it == """<hi rend="bold">¶</hi>""") {
+                if (it.startsWith("<space ") || it == ENCODED_PAGE_BREAK) {
                     it
                 } else {
                     val n = paraCounter.andIncrement
@@ -349,8 +355,8 @@ object TEIBuilder {
     }
 
     private fun String.setPageBreaks(divType: String, lang: String): String =
-        this.replace("""<hi rend="bold"><hi rend="bold">¶</hi></hi>""", """<hi rend="bold">¶</hi>""")
-            .split("""<hi rend="bold">¶</hi>""")
+        this.replace("""<hi rend="bold">$ENCODED_PAGE_BREAK</hi>""", ENCODED_PAGE_BREAK)
+            .split(ENCODED_PAGE_BREAK)
             .mapIndexed { i, t ->
                 if (i == 0) {
                     t
