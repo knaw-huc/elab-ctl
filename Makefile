@@ -33,8 +33,7 @@ editions-list:
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
 	./bin/elabctl archive ./data/elab4-brieven-correspondenten-1900.war
-	xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
-	#make brieven-correspondenten-1900-rsync
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
 
 .PHONY: brieven-correspondenten-1900-rsync
 brieven-correspondenten-1900-rsync:

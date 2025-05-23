@@ -138,6 +138,7 @@ object TEIBuilder {
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang)
                                 .wrapLines(80)
+                                .wrapSpaceElementWithNewLines()
                             "div" {
                                 attribute("type", divType)
                                 attribute("xml:lang", lang)
@@ -318,15 +319,22 @@ object TEIBuilder {
     private fun String.removeLineBreaks(): String =
         this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
 
-    private fun String.convertVerticalSpace(): String =
-        this.replace(Regex("\n\\s*\n"), "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n")
+    const val SPACE_ELEMENT_LINE = "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n"
+    private fun String.convertVerticalSpace(): String {
+        return this.replace(Regex("\n\\s*\n"), SPACE_ELEMENT_LINE)
+    }
+
+    private fun String.wrapSpaceElementWithNewLines(): String =
+        this.replace(
+            SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
+        )
 
     private fun String.setParagraphs(divType: String, lang: String): String {
         val paraCounter = AtomicInt(1)
         return this.split("\n")
             .filter { it.isNotBlank() }
             .joinToString("\n") {
-                if (it.contains("<space ") || it == """<hi rend="bold">¶</hi>""") {
+                if (it.startsWith("<space ") || it == """<hi rend="bold">¶</hi>""") {
                     it
                 } else {
                     val n = paraCounter.andIncrement
