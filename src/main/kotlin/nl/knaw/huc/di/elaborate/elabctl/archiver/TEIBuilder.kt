@@ -17,9 +17,10 @@ object TEIBuilder {
         "u" to "underline",
         "em" to "italics",
         "i" to "italics",
-        "sub" to "subscript",
+        "sub" to "sub",
         "sup" to "super"
     )
+    val VALID_WHEN_REGEX = Regex("\\d\\d\\d\\d-\\d\\d-\\d\\d")
 
     fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig): String {
         val printOptions = PrintOptions(
@@ -80,8 +81,8 @@ object TEIBuilder {
                                 "country" {}
                                 "settlement" { metadataMap["Bewaarplaats"] ?: "" }
                                 "institution" { metadataMap["Bewaarplaats"] ?: "" }
-                                "repository" { }
-                                "collection" { -(metadataMap["Collectie"] ?: "") }
+//                                "repository" { }
+//                                "collection" { -(metadataMap["Collectie"] ?: "") }
                                 "idno" { -(metadataMap["Signatuur"] ?: "") }
                             }
                             "physDesc" {
@@ -127,7 +128,7 @@ object TEIBuilder {
             val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
             "text" {
                 "body" {
-                    attribute("divRole", "original")
+//                    attribute("divRole", "original")
                     parallelTexts
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
@@ -213,7 +214,7 @@ object TEIBuilder {
                 }
             "date" {
                 val w = date.subSequence(0, 10)
-                if (!w.contains("X")) {
+                if (w.matches(VALID_WHEN_REGEX)) {
                     attribute("when", w)
                 }
                 -date
