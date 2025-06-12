@@ -80,10 +80,10 @@ object TEIBuilder {
                                 "institution" { }
                                 "idno" { -(metadataMap["Signatuur"] ?: "") }
                             }
-                        }
-                        "physDesc" {
-                            "objectDesc" {
-                                attribute("form", "letter")
+                            "physDesc" {
+                                "objectDesc" {
+                                    attribute("form", "letter")
+                                }
                             }
                         }
                     }
