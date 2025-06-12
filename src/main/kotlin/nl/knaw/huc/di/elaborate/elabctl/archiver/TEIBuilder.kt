@@ -31,6 +31,7 @@ object TEIBuilder {
         val currentDate = LocalDateTime.now().format(formatter)
         val metadataMap = metadata.associate { it.field to it.value }
         val projectName = projectConfig.projectName
+        val title = name
 
         return xml("TEI") {
             globalProcessingInstruction("editem", Pair("template", "letter"))
@@ -54,7 +55,8 @@ object TEIBuilder {
                 "fileDesc" {
                     "titleStmt" {
                         "title" {
-                            -name
+                            comment(name)
+                            -title
                         }
                     }
                     "publicationStmt" {
@@ -76,8 +78,10 @@ object TEIBuilder {
                         "msDesc" {
                             "msIdentifier" {
                                 "country" {}
-                                "settlement" {}
-                                "institution" { }
+                                "settlement" { metadataMap["Bewaarplaats"] ?: "" }
+                                "institution" { metadataMap["Bewaarplaats"] ?: "" }
+                                "repository" { }
+                                "collection" { -(metadataMap["Collectie"] ?: "") }
                                 "idno" { -(metadataMap["Signatuur"] ?: "") }
                             }
                             "physDesc" {
@@ -123,6 +127,7 @@ object TEIBuilder {
             val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
             "text" {
                 "body" {
+                    attribute("divRole", "original")
                     parallelTexts
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
