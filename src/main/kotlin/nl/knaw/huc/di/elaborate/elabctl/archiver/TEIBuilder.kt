@@ -207,7 +207,10 @@ object TEIBuilder {
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                attribute("when", date)
+                val w = date.subSequence(0, 10)
+                if (!w.contains("X")) {
+                    attribute("when", w)
+                }
                 -date
             }
             "placeName" {
