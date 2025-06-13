@@ -59,6 +59,10 @@ object TEIBuilder {
                             comment(name)
                             -title
                         }
+                        "editor" {
+                            attribute("xml:id", "ak")
+                            -"Annemarie Kets"
+                        }
                     }
                     "publicationStmt" {
                         "publisher" {
