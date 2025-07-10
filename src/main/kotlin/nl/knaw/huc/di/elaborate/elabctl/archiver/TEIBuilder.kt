@@ -217,7 +217,7 @@ object TEIBuilder {
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                val w = date.subSequence(0, 10)
+                val w = if (date.length>=10) date.subSequence(0, 10) else date
                 if (w.matches(VALID_WHEN_REGEX)) {
                     attribute("when", w)
                 }

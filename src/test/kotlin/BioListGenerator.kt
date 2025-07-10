@@ -120,10 +120,11 @@ object App {
         val personXmlNodes = mutableListOf<Node>()
         val koppelnaamToPersonId = mutableMapOf<String, String>()
         persons.forEachIndexed { i, person ->
-            val xmlId = when {
-                person.dbnlUrl.isNotEmpty() -> person.dbnlUrl.substringAfterLast("=")
-                else -> """pers${(i + 1).toString().padStart(3, '0')}"""
-            }
+//            val xmlId = when {
+//                person.dbnlUrl.isNotEmpty() -> person.dbnlUrl.substringAfterLast("=")
+//                else -> """pers${(i + 1).toString().padStart(3, '0')}"""
+//            }
+            val xmlId = """pers${(i + 1).toString().padStart(3, '0')}"""
             koppelnaamToPersonId[person.koppelnaam] = xmlId
             personXmlNodes.add(
                 xml("person") {

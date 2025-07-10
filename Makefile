@@ -24,7 +24,7 @@ archive:
 
 .PHONY: drafts-list
 drafts-list:
-	./scripts/e4-list-drafts.sh
+	./scripts/e4-list.sh drafts
 
 .PHONY: editions-list
 editions-list:
