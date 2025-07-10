@@ -50,7 +50,7 @@ object Archiver {
                         logger.info { "entry ${i + 1} / $total..." }
                         logger.info { entryDescription }
                         val teiName =
-                            teiName(entryTypeName, i + 1, entryDescription.shortName)
+                            teiName(entryTypeName, i + 1, entryDescription.name)
                         val entry = loadEntry(zip, entryDescription)
 
                         processFacsimiles(teiName, entry.facsimiles, scriptLines)
