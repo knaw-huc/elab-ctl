@@ -1,0 +1,1 @@
+alias elabctl='make shadow-jar >/dev/null; java -jar build/libs/elabctl.jar'
