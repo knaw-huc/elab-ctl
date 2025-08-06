@@ -28,8 +28,9 @@ drafts-list:
 
 .PHONY: editions-list
 editions-list:
-	./scripts/e4-list-editions.sh
+	./scripts/e4-list.sh editions
 
+# brieven-correspondenten-1900
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
 	./bin/elabctl archive ./data/elab4-brieven-correspondenten-1900.war
@@ -39,6 +40,17 @@ brieven-correspondenten-1900:
 brieven-correspondenten-1900-rsync:
 	rsync -rav build/zip/elab4-brieven-correspondenten-1900/* ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/tei/letters/
 	cd ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900 && (git commit -a -m "new elaborate export" && git push)
+
+# correspondentie-bolland-en-cosijn
+.PHONY: correspondentie-bolland-en-cosijn
+correspondentie-bolland-en-cosijn:
+	./bin/elabctl archive ./data/elab4-correspondentie-bolland-en-cosijn.war
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
+
+.PHONY: correspondentie-bolland-en-cosijn-rsync
+correspondentie-bolland-en-cosijn-rsync:
+	rsync -rav build/zip/elab4-correspondentie-bolland-en-cosijn/* ~/workspaces/editem/elaborate-export/correspondentie-bolland-en-cosijn/tei/letters/
+	cd ~/workspaces/editem/elaborate-export/correspondentie-bolland-en-cosijn && (git commit -a -m "new elaborate export" && git push)
 
 .PHONY: help
 help:
@@ -53,3 +65,6 @@ help:
 	@echo
 	@echo "  brieven-correspondenten-1900 - to run the tei export for brieven-correspondenten-1900"
 #	@echo "  brieven-correspondenten-1900-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900"
+
+	@echo "  correspondentie-bolland-en-cosijn - to run the tei export for correspondentie-bolland-en-cosijn"
+
