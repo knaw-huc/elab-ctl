@@ -4,6 +4,8 @@ DOCKER_DOMAIN = registry.diginfra.net/tt
 SHELL=/bin/bash
 SHADOW_JAR=build/libs/elabctl.jar
 NEWER_SOURCE_FILES=$(shell find src/main -newer $(SHADOW_JAR) -type f)
+BRICOR=brieven-correspondenten-1900
+BOLCOS=correspondentie-bolland-en-cosijn
 
 .PHONY: shadow-jar
 shadow-jar:
@@ -33,24 +35,24 @@ editions-list:
 # brieven-correspondenten-1900
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
-	./bin/elabctl archive ./data/elab4-brieven-correspondenten-1900.war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
+	./bin/elabctl archive ./data/elab4-$(BRICOR).war
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/*.xml
 
 .PHONY: brieven-correspondenten-1900-rsync
 brieven-correspondenten-1900-rsync:
-	rsync -rav build/zip/elab4-brieven-correspondenten-1900/* ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/tei/letters/
-	cd ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900 && (git commit -a -m "new elaborate export" && git push)
+	rsync -rav build/zip/elab4-$(BRICOR)/* ~/workspaces/editem/elaborate-export/$(BRICOR)/tei/letters/
+	cd ~/workspaces/editem/elaborate-export/$(BRICOR) && (git commit -a -m "new elaborate export" && git push)
 
 # correspondentie-bolland-en-cosijn
 .PHONY: correspondentie-bolland-en-cosijn
 correspondentie-bolland-en-cosijn:
-	./bin/elabctl archive ./data/elab4-correspondentie-bolland-en-cosijn.war
+	./bin/elabctl archive ./data/elab4-$(BOLCOS).war
 	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
 
 .PHONY: correspondentie-bolland-en-cosijn-rsync
 correspondentie-bolland-en-cosijn-rsync:
-	rsync -rav build/zip/elab4-correspondentie-bolland-en-cosijn/* ~/workspaces/editem/elaborate-export/correspondentie-bolland-en-cosijn/tei/letters/
-	cd ~/workspaces/editem/elaborate-export/correspondentie-bolland-en-cosijn && (git commit -a -m "new elaborate export" && git push)
+	rsync -rav build/zip/elab4-$(BOLCOS)/* ~/workspaces/editem/elaborate-export/$(BOLCOS)/tei/letters/
+	cd ~/workspaces/editem/elaborate-export/$(BOLCOS) && (git commit -a -m "new elaborate export" && git push)
 
 .PHONY: help
 help:
@@ -63,8 +65,9 @@ help:
 	@echo "  drafts-list   - to list the available drafts"
 	@echo "  editions-list - to list the available editions"
 	@echo
-	@echo "  brieven-correspondenten-1900 - to run the tei export for brieven-correspondenten-1900"
-#	@echo "  brieven-correspondenten-1900-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900"
+	@echo "  $(BRICOR) - to run the tei export for $(BRICOR)"
+#	@echo "  $(BRICOR)-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BRICOR)"
 
-	@echo "  correspondentie-bolland-en-cosijn - to run the tei export for correspondentie-bolland-en-cosijn"
+	@echo "  $(BOLCOS) - to run the tei export for $(BOLCOS)"
+#	@echo "  $(BOLCOS)-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BOLCOS)"
 
