@@ -47,11 +47,11 @@ brieven-correspondenten-1900-rsync:
 .PHONY: correspondentie-bolland-en-cosijn
 correspondentie-bolland-en-cosijn:
 	./bin/elabctl archive ./data/elab4-$(BOLCOS).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/brieven-correspondenten-1900/schema/editem-letter.rng build/zip/elab4-brieven-correspondenten-1900/*.xml
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-letter.rng build/zip/elab4-$(BOLCOS)/*.xml
 
 .PHONY: correspondentie-bolland-en-cosijn-rsync
 correspondentie-bolland-en-cosijn-rsync:
-	rsync -rav build/zip/elab4-$(BOLCOS)/* ~/workspaces/editem/elaborate-export/$(BOLCOS)/tei/letters/
+	rsync -rav build/zip/elab4-$(BOLCOS)/* ~/workspaces/editem/elaborate-export/$(BOLCOS)/tei/
 	cd ~/workspaces/editem/elaborate-export/$(BOLCOS) && (git commit -a -m "new elaborate export" && git push)
 
 .PHONY: help

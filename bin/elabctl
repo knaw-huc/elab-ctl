@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-make --quiet shadow-jar
+make --quiet shadow-jar && \
 java -jar build/libs/elabctl.jar $*
 #./gradlew -q run --args "$*"

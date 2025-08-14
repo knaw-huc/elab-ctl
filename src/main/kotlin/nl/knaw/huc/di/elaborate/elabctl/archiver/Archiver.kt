@@ -9,6 +9,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -34,7 +35,8 @@ object Archiver {
                 divTypeForLayerName = mapOf("Transcription" to "original")
             )
             File("build/zip/$projectName").deleteRecursively()
-            File("build/zip/$projectName").mkdirs()
+            File("build/zip/$projectName/letters").mkdirs()
+            File("build/zip/$projectName/about").mkdirs()
             File("out").mkdirs()
             logger.info { "<= $warPath" }
             val facsimilePaths = mutableListOf<String>()
@@ -71,7 +73,7 @@ object Archiver {
 
 //                logger.info { entry.metadata }
                         val tei = entry.toTEI(teiName, projectConfig)
-                        val teiPath = "build/zip/$projectName/${teiName}.xml"
+                        val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
                         if (!tei.isWellFormed()) {
                             errors.add("file $teiPath is NOT well-formed!")
                         }
@@ -80,6 +82,7 @@ object Archiver {
                         logger.info { "" }
                     }
             }
+            errors += convertWordPressExport(projectName)
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)
             storeScriptLines(scriptLines)
@@ -88,6 +91,19 @@ object Archiver {
                 errors.forEach { logger.error { it } }
             }
         }
+    }
+
+    fun convertWordPressExport(projectName: String): List<String> {
+        val outputDir = "build/zip/$projectName/about"
+        val errors = mutableListOf<String>()
+        val wpePath = "data/${projectName.replace("elab4-", "")}-wpe.xml"
+        if (Path(wpePath).exists()) {
+            val converter = WordPressExportConverter(outputDir)
+            converter.convert(wpePath)
+        } else {
+            errors.add("File not found: $wpePath")
+        }
+        return errors
     }
 
     private fun loadPersonIdMap(projectName: String): Map<String, String> {

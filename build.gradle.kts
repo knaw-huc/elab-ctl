@@ -49,7 +49,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // 1.7.0 leads to compile error
     implementation("org.jsoup:jsoup:1.17.2")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
-
     runtimeOnly("com.github.jai-imageio:jai-imageio-jpeg2000:1.4.0") // jpeg2000 handling in imageio
 
     testImplementation(kotlin("test"))
