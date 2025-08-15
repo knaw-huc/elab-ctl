@@ -36,18 +36,18 @@ editions-list:
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
 	./bin/elabctl archive ./data/elab4-$(BRICOR).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/*.xml
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/*/*.xml
 
 .PHONY: brieven-correspondenten-1900-rsync
 brieven-correspondenten-1900-rsync:
-	rsync -rav build/zip/elab4-$(BRICOR)/* ~/workspaces/editem/elaborate-export/$(BRICOR)/tei/letters/
+	rsync -rav build/zip/elab4-$(BRICOR)/* ~/workspaces/editem/elaborate-export/$(BRICOR)/tei/
 	cd ~/workspaces/editem/elaborate-export/$(BRICOR) && (git commit -a -m "new elaborate export" && git push)
 
 # correspondentie-bolland-en-cosijn
 .PHONY: correspondentie-bolland-en-cosijn
 correspondentie-bolland-en-cosijn:
 	./bin/elabctl archive ./data/elab4-$(BOLCOS).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-letter.rng build/zip/elab4-$(BOLCOS)/*.xml
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-letter.rng build/zip/elab4-$(BOLCOS)/*/*.xml
 
 .PHONY: correspondentie-bolland-en-cosijn-rsync
 correspondentie-bolland-en-cosijn-rsync:

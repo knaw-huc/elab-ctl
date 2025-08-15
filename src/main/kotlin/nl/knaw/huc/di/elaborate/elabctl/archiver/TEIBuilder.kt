@@ -7,6 +7,7 @@ import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
+import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 import nl.knaw.huc.di.elaborate.elabctl.logger
 
 object TEIBuilder {
@@ -22,7 +23,7 @@ object TEIBuilder {
     )
     val VALID_WHEN_REGEX = Regex("\\d\\d\\d\\d-\\d\\d-\\d\\d")
 
-    fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig): String {
+    fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig, conversionConfig: ElabCtlConfig): String {
         val printOptions = PrintOptions(
             singleLineTextElements = true,
             indent = "  ",
@@ -33,6 +34,9 @@ object TEIBuilder {
         val metadataMap = metadata.associate { it.field to it.value }
         val projectName = projectConfig.projectName
         val title = name
+        val editorName = conversionConfig.editor.name
+        val editorId = conversionConfig.editor.id
+        val editorUrl = conversionConfig.editor.url
 
         return xml("TEI") {
             globalProcessingInstruction("editem", Pair("template", "letter"))
@@ -60,8 +64,9 @@ object TEIBuilder {
                             -title
                         }
                         "editor" {
-                            attribute("xml:id", "ak")
-                            -"Annemarie Kets"
+                            attribute("xml:id", editorId)
+                            -editorName
+                            comment(editorUrl)
                         }
                     }
                     "publicationStmt" {
@@ -217,7 +222,7 @@ object TEIBuilder {
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                val w = if (date.length>=10) date.subSequence(0, 10) else date
+                val w = if (date.length >= 10) date.subSequence(0, 10) else date
                 if (w.matches(VALID_WHEN_REGEX)) {
                     attribute("when", w)
                 }

@@ -19,6 +19,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.toTEI
+import nl.knaw.huc.di.elaborate.elabctl.config.ConfigTool.loadConfig
+import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 
 object Archiver {
 
@@ -34,6 +36,7 @@ object Archiver {
                 personIds = loadPersonIdMap(projectName),
                 divTypeForLayerName = mapOf("Transcription" to "original")
             )
+            val conversionConfig = loadConfig(projectConfig.projectName)
             File("build/zip/$projectName").deleteRecursively()
             File("build/zip/$projectName/letters").mkdirs()
             File("build/zip/$projectName/about").mkdirs()
@@ -72,7 +75,7 @@ object Archiver {
                         })
 
 //                logger.info { entry.metadata }
-                        val tei = entry.toTEI(teiName, projectConfig)
+                        val tei = entry.toTEI(teiName, projectConfig, conversionConfig)
                         val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
                         if (!tei.isWellFormed()) {
                             errors.add("file $teiPath is NOT well-formed!")
@@ -82,7 +85,7 @@ object Archiver {
                         logger.info { "" }
                     }
             }
-            errors += convertWordPressExport(projectName)
+            errors.addAll(convertWordPressExport(projectName, conversionConfig))
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)
             storeScriptLines(scriptLines)
@@ -93,13 +96,13 @@ object Archiver {
         }
     }
 
-    fun convertWordPressExport(projectName: String): List<String> {
+    fun convertWordPressExport(projectName: String, conversionConfig: ElabCtlConfig): List<String> {
         val outputDir = "build/zip/$projectName/about"
         val errors = mutableListOf<String>()
         val wpePath = "data/${projectName.replace("elab4-", "")}-wpe.xml"
         if (Path(wpePath).exists()) {
-            val converter = WordPressExportConverter(outputDir)
-            converter.convert(wpePath)
+            val conversionErrors = WordPressExportConverter(outputDir, conversionConfig).convert(wpePath)
+            errors.addAll(conversionErrors)
         } else {
             errors.add("File not found: $wpePath")
         }

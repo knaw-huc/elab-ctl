@@ -9,11 +9,13 @@ import kotlin.io.path.Path
 import kotlin.io.path.writeText
 import org.apache.logging.log4j.kotlin.logger
 import org.redundent.kotlin.xml.PrintOptions
+import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 
-class WordPressExportConverter(private val outputDir: String) {
+class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlConfig) {
     object WordPressExportNamespaceContext : NamespaceContext {
         val namespaceMap = mapOf(
             "excerpt" to "http://wordpress.org/export/1.2/excerpt/",
@@ -71,6 +73,9 @@ class WordPressExportConverter(private val outputDir: String) {
                     val outPath = "$outputDir/$postName.xml"
                     logger.info { "=> $outPath" }
                     Path(outPath).writeText(xmlSrc)
+                    if (!xmlSrc.isWellFormed()) {
+                        errors.add("file $outPath is NOT well-formed!")
+                    }
                 }
         }
 
@@ -85,16 +90,73 @@ class WordPressExportConverter(private val outputDir: String) {
 
     private fun buildXML(content: String, link: String, creator: String, title: String, lastModified: String): String =
         xml("TEI") {
+            globalProcessingInstruction("editem", Pair("template", "about"))
+            globalProcessingInstruction(
+                "xml-model",
+                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-about.rng"),
+                Pair("type", "application/xml"),
+                Pair("schematypens", "http://relaxng.org/ns/structure/1.0"),
+            )
+            globalProcessingInstruction(
+                "xml-model",
+                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-about.rng"),
+                Pair("type", "application/xml"),
+                Pair("schematypens", "http://purl.oclc.org/dsdl/schematron"),
+            )
+            version = XmlVersion.V10
+            encoding = "UTF-8"
+            xmlns = "http://www.tei-c.org/ns/1.0"
+
+            "teiHeader" {
+                "fileDesc" {
+                    "titleStmt" {
+                        "title" {
+                            -title
+                        }
+                        "editor" {
+                            attribute("xml:id", conf.editor.id)
+                            -conf.editor.name
+                            comment(conf.editor.url)
+                        }
+                    }
+                    "publicationStmt" {
+                        comment("creator = $creator")
+                        "publisher" {
+                            "name" {
+                                attribute("ref", "https://huygens.knaw.nl")
+                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
+                            }
+                        }
+                        "date" {
+                            attribute("when", lastModified)
+                            -lastModified
+                        }
+                        "ptr" {
+                            attribute("type", "webedition")
+                            attribute("target", link)
+                        }
+                    }
+                    "sourceDesc" {
+                        "p" { -"N.A." }
+                    }
+                }
+            }
+
             "text" {
-                comment("link = $link")
-                comment("creator = $creator")
-                comment("title = $title")
-                comment("lastModified = $lastModified")
                 "body" {
-                    unsafeText(content)
+                    unsafeText(asTEI(content))
                 }
             }
         }.toString(printOptions = printOptions)
+
+    private fun asTEI(htmlContent: String): String =
+        "\n\n" +
+                htmlContent
+                    .replace("[print-me]", "")
+                    .replace("[SIPC_Content]", "")
+                    .replace("&nbsp;", " ")
+                    .trim() +
+                "\n\n"
 
     private fun logNode(
         title: String,

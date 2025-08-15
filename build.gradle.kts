@@ -35,6 +35,7 @@ dependencies {
     implementation(kotlin("reflect"))
 
     implementation("ch.qos.logback:logback-classic:1.5.13")
+    implementation("com.charleskorn.kaml:kaml:0.61.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.github.spullara.mustache.java:compiler:0.9.10")
     implementation("com.google.code.gson:gson:2.10")
