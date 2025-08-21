@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ElabCtlConfig(
+    val projectName: String,
     val editor: EditorConfig
 )
 

@@ -59,3 +59,63 @@ In  brieven-correspondenten komen in de lopende tekst wel constructies voor als:
 
 Er komen annotaties voor in de tekst, deze kunnen vertaald worden naar een standoff annotation sectie + pointers in de tekst
 annotaties hebben ook nog een type, waar kan ik dat kwijt in de <note> ?
+
+---
+
+# `about` teksten
+
+Via een xml dump vanuit WordPress is de html tekst van de about pages te achterhalen.
+
+De semi-geconverteerde versies staan hier:
+
+- voor correspondentie-bolland-en-cosijn: https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn/-/tree/main/tei/about
+- voor brieven-correspondenten-1900: https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900/-/tree/main/tei/about
+
+Zijn ze allemaal relevant?
+Voor brieven-correspondenten zitten er zo te zien (eerdere versies van?) blogposts van https://opgravingen.huygens.knaw.nl/
+bij. Zijn die relevant?
+
+In sommige gevallen was de HTML niet well-formed, omdat begin/end tags ontbraken.
+In deze gevallen heb ik de HTML aangepast in de WordPress export file.
+
+De gebruikte HTML tags moeten geconverteerd worden naar TEI/XML tags. Voor sommige ligt de conversie voor de hand, voor andere minder.
+
+Hier is een overzicht van de HTML tags + hun attributen zoals gebruikt in de HTML van de WordPress pagina's.
+Waar ik al een conversie zag heb ik deze ingevuld.
+Kunnen jullie bij de overige tags en attributen
+aangeven hoe deze naar Editem TEI geconverteerd moeten worden?
+
+| HTML | attr | TEI | attr             | comment |
+|------|------|-----|------------------|---------|
+| a | href | ref | target           |         |
+|  | name |     |                  |         |
+| button | onclick |     |                  |         |
+|  | style |     |                  |         |
+| em |  | hi  | rend="italics"   |         |
+| h2 |  |     |                  |         |
+| h3 | style |     |                  |         |
+| i | style | hi  | rend="italics"   |         |
+| iframe | allowfullscreen |     |                  |         |
+|  | frameborder |     |                  |         |
+|  | height |     |                  |         |
+|  | src |     |                  |         |
+|  | width |     |                  |         |
+| img | alt |     |                  |         |
+|  | class |     |                  |         |
+|  | height |     |                  |         |
+|  | src |     |                  |         |
+|  | style |     |                  |         |
+|  | width |     |                  |         |
+| li |  |     |                  |         |
+| ol |  |     |                  |         |
+| p | style | p   |                  |         |
+| span | style |     |                  |         |
+| strong |  | hi  | rend="bold"      |         |
+| sup |  | hi  | rend="super"     |         |
+| table | width |     |                  |         |
+| tbody |  |     |                  |         |
+| td | style |     |                  |         |
+|  | width |     |                  |         |
+| tr |  |     |                  |         |
+| u |  | hi  | rend="underline" |         |
+| ul |  |     |                  |         |

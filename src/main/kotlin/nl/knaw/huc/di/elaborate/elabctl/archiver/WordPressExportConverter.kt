@@ -14,6 +14,7 @@ import org.redundent.kotlin.xml.xml
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
+import nl.knaw.huygens.tei.Document.createFromXml
 
 class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlConfig) {
     object WordPressExportNamespaceContext : NamespaceContext {
@@ -42,8 +43,9 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                 in reverseMap -> listOf(reverseMap[namespaceURI]).iterator()
                 else -> null
             }
-
     }
+
+    val elementInventoryVisitor = ElementInventoryVisitor()
 
     val xpath: XPath = XPathFactory.newInstance().newXPath().apply {
         namespaceContext = WordPressExportNamespaceContext
@@ -55,6 +57,7 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             .newInstance()
             .apply { this.isNamespaceAware = true }
             .newDocumentBuilder()
+
         logger.info { "<= $xmlPath" }
         builder.parse(xmlPath).let { doc ->
             doc.getNodeSequence("//item")
@@ -78,6 +81,8 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                     }
                 }
         }
+
+        exportElementInventory()
 
         return errors
     }
@@ -149,14 +154,39 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             }
         }.toString(printOptions = printOptions)
 
-    private fun asTEI(htmlContent: String): String =
-        "\n\n" +
-                htmlContent
-                    .replace("[print-me]", "")
-                    .replace("[SIPC_Content]", "")
-                    .replace("&nbsp;", " ")
-                    .trim() +
-                "\n\n"
+    private fun asTEI(htmlContent: String): String {
+        val cleaned = htmlContent
+            .replace("[print-me]", "")
+            .replace("[SIPC_Content]", "")
+            .replace("<div style=\"width:600px;\">", "")
+            .replace("&nbsp;", " ")
+            .replace("<br>", "<br/>")
+            .trim()
+        val tei = if (!cleaned.wrapInXml().isWellFormed()) {
+            cleaned.fixXhtml()
+        } else {
+            cleaned
+        }
+        val wrapped = tei.wrapInXml()
+        return if (wrapped.isWellFormed()) {
+            val doc1 = createFromXml(wrapped, false)
+            doc1.accept(elementInventoryVisitor)
+
+            val visitor = WordPressExportItemContentVisitor()
+            val doc2 = createFromXml(wrapped, false)
+            doc2.accept(visitor)
+            val result = visitor.context.result
+            val fixed = result.unwrapFromXml()
+                .replace("\u00A0", " ")
+                .replace(" </hi>", "</hi> ")
+                .replace("</p>", "</p>\n")
+
+            "\n\n$fixed\n\n"
+        } else {
+            logger.error { "HTML not well-formed" }
+            "\n\n<!-- NOT WELL-FORMED! -->\n$tei\n\n"
+        }
+    }
 
     private fun logNode(
         title: String,
@@ -215,4 +245,38 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
     private fun Node.getBoolean(xpathExpression: String): Boolean =
         xpath.compile(xpathExpression)
             .evaluate(this, XPathConstants.BOOLEAN) as Boolean
+
+    private fun WordPressExportConverter.exportElementInventory() {
+        val elementNames = elementInventoryVisitor.elementNames()
+        val elementInventory = elementInventoryVisitor.elementInventory()
+        val mdBuilder = StringBuilder().append(
+            """| HTML | attr | TEI | attr | comment |
+|------|------|-----|------|---------|
+"""
+        )
+        var lastKey = ""
+        elementNames.forEach { name ->
+            val attributes = elementInventory[name]
+            if (attributes == null) {
+                val row = "| $name |  |     |      |         |\n"
+                mdBuilder.append(row)
+
+            } else {
+                attributes.forEach { attribute ->
+                    val element = if (name == lastKey) {
+                        ""
+                    } else {
+                        lastKey = name
+                        name
+                    }
+                    val row = "| $element | $attribute |     |      |         |\n"
+                    mdBuilder.append(row)
+                }
+            }
+        }
+        val outPath = "out/${conf.projectName}-element-inventory.md"
+        logger.info { "=> $outPath" }
+        Path(outPath).writeText(mdBuilder.toString())
+    }
 }
+
