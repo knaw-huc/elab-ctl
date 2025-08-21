@@ -9,6 +9,7 @@ import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 import nl.knaw.huc.di.elaborate.elabctl.logger
+import nl.knaw.huygens.tei.Document
 
 object TEIBuilder {
 
@@ -353,6 +354,14 @@ object TEIBuilder {
 
     const val ENCODED_PAGE_BREAK = """<hi rend="bold">¶</hi>"""
     private fun String.setParagraphs(divType: String, lang: String): String {
+        val visitor = ParagraphVisitor(divType, lang)
+        val xml = this.wrapInXml()
+        Document.createFromXml(xml, false)
+            .accept(visitor)
+        return visitor.context.result.unwrapFromXml()
+    }
+
+    private fun String.setParagraphs0(divType: String, lang: String): String {
         val paraCounter = AtomicInt(1)
         return this.split("\n")
             .filter { it.isNotBlank() }

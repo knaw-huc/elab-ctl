@@ -62,6 +62,16 @@ annotaties hebben ook nog een type, waar kan ik dat kwijt in de <note> ?
 
 ---
 
+# correspondentie-bolland-en-cosijn
+
+Het correspondentie-bolland-en-cosijn heb ik ook geconverteerd, op enkele punten heb ik de code moeten aanpassen.
+
+De gegenereerde TEI is hier te zien:
+https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn/-/tree/main/tei?ref_type=heads
+
+Voor de `<editor>` heb ik een aanname gedaan, als dat anders moet zijn hoor ik het wel.
+
+
 # `about` teksten
 
 Via een xml dump vanuit WordPress is de html tekst van de about pages te achterhalen.
@@ -119,3 +129,17 @@ aangeven hoe deze naar Editem TEI geconverteerd moeten worden?
 | tr |  |     |                  |         |
 | u |  | hi  | rend="underline" |         |
 | ul |  |     |                  |         |
+
+
+## Brieftitels
+
+Voor nu neem ik de aangegeven entry titel als brieftitel, maar Elli gaf aan dat er een vast template is voor de brieftitel, met afzender, ontvanger, verzendplaats en verzend datum.
+Bij correspondenten-1900 zitten wat entry titels die zich niet zo laten omvormen, bijv:
+
+- Addens, Johannes aan Verwey, Albert/Vloten, Katharina van | 1890-06-XX ( 2 geadresseerden)
+-  Addens, Johannes/Wohltat, Wilhelmina Dorothea aan Gennep, Johanna Elizabeth Hendrika Christina van | 1883-11-14 (2 afzenders)
+- Alberdingk Thijm, Karel Joan Lodewijk aan Groesbeek, Klaas/Nijhoff, Paulus#Scheltema & Holkema’s Boekhandel, Uitgeverij | 1902-12-16 (geadresseerde vertegenwoordigd een organisatie)
+-  Alberdingk Thijm, Karel Joan Lodewijk aan Verwey, Albert | 1891-01-16+1891-02-09 (meerdere/onzekere verzenddatums) 
+-  Jelgersma, Gerbrandus aan Kloos, Willem Johannes Theodorus --> Witsen, Willem Arnoldus | 1895-05-10 (doorgestuurde brief)
+
+Hoe moet de standaard brieftitel er in deze gevallen uitzien?

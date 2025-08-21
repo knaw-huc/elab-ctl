@@ -66,28 +66,28 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         }
     }
 
-    internal class IgnoreHandler(private val onEnter: Traversal) : ElementHandler<XmlContext> {
-
-        override fun enterElement(element: Element, context: XmlContext): Traversal {
-            return onEnter
-        }
-
-        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            return NEXT
-        }
-    }
-
-    internal class XmlHandler : ElementHandler<XmlContext> {
-        override fun enterElement(element: Element, context: XmlContext): Traversal {
-            context.addOpenTag(element)
-            return NEXT
-        }
-
-        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            context.addCloseTag(element)
-            return NEXT
-        }
-    }
+//    internal class IgnoreHandler(private val onEnter: Traversal) : ElementHandler<XmlContext> {
+//
+//        override fun enterElement(element: Element, context: XmlContext): Traversal {
+//            return onEnter
+//        }
+//
+//        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+//            return NEXT
+//        }
+//    }
+//
+//    internal class XmlHandler : ElementHandler<XmlContext> {
+//        override fun enterElement(element: Element, context: XmlContext): Traversal {
+//            context.addOpenTag(element)
+//            return NEXT
+//        }
+//
+//        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+//            context.addCloseTag(element)
+//            return NEXT
+//        }
+//    }
 
     internal class DefaultElementHandler : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
