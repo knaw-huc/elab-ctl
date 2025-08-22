@@ -2,14 +2,11 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.util.ArrayDeque
 import java.util.Deque
-import nl.knaw.huygens.tei.Comment
-import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor
 import nl.knaw.huygens.tei.Element
 import nl.knaw.huygens.tei.ElementHandler
 import nl.knaw.huygens.tei.Traversal
 import nl.knaw.huygens.tei.Traversal.NEXT
-import nl.knaw.huygens.tei.Traversal.STOP
 import nl.knaw.huygens.tei.XmlContext
 import nl.knaw.huygens.tei.handlers.XmlTextHandler
 
@@ -19,9 +16,9 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         setTextHandler(XmlTextHandler())
         setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
-        addElementHandler(RemoveAttributesHandler(), "p")
-        addElementHandler(RefHandler(), "a")
-        addElementHandler(ImgHandler(), "img")
+//        addElementHandler(RemoveAttributesHandler(), "p")
+//        addElementHandler(RefHandler(), "a")
+//        addElementHandler(ImgHandler(), "img")
     }
 
     internal class ImgHandler() : ElementHandler<XmlContext> {
@@ -66,29 +63,6 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         }
     }
 
-//    internal class IgnoreHandler(private val onEnter: Traversal) : ElementHandler<XmlContext> {
-//
-//        override fun enterElement(element: Element, context: XmlContext): Traversal {
-//            return onEnter
-//        }
-//
-//        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-//            return NEXT
-//        }
-//    }
-//
-//    internal class XmlHandler : ElementHandler<XmlContext> {
-//        override fun enterElement(element: Element, context: XmlContext): Traversal {
-//            context.addOpenTag(element)
-//            return NEXT
-//        }
-//
-//        override fun leaveElement(element: Element, context: XmlContext): Traversal {
-//            context.addCloseTag(element)
-//            return NEXT
-//        }
-//    }
-
     internal class DefaultElementHandler : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             val name: String = element.name
@@ -106,12 +80,6 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             context.addCloseTag(openElements.pop())
             return NEXT
-        }
-    }
-
-    class IgnoreCommentHandler : CommentHandler<XmlContext> {
-        override fun visitComment(p0: Comment?, p1: XmlContext?): Traversal {
-            return STOP
         }
     }
 

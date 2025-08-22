@@ -2,14 +2,11 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.util.TreeSet
 import nl.knaw.huc.di.elaborate.elabctl.logger
-import nl.knaw.huygens.tei.Comment
-import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor
 import nl.knaw.huygens.tei.Document
 import nl.knaw.huygens.tei.Element
 import nl.knaw.huygens.tei.ElementHandler
 import nl.knaw.huygens.tei.Traversal
-import nl.knaw.huygens.tei.Traversal.STOP
 import nl.knaw.huygens.tei.XmlContext
 import nl.knaw.huygens.tei.handlers.XmlTextHandler
 
@@ -80,12 +77,6 @@ class AnnotationBodyConverter {
 
         override fun leaveElement(e: Element, c: XmlContext?): Traversal {
             return Traversal.NEXT
-        }
-    }
-
-    class IgnoreCommentHandler : CommentHandler<XmlContext> {
-        override fun visitComment(p0: Comment?, p1: XmlContext?): Traversal {
-            return STOP
         }
     }
 

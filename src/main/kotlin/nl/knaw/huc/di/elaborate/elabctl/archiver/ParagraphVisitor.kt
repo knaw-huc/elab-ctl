@@ -3,7 +3,6 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 import java.util.ArrayDeque
 import java.util.Deque
 import arrow.atomic.AtomicInt
-import nl.knaw.huc.di.elaborate.elabctl.archiver.TranscriptionVisitor.IgnoreCommentHandler
 import nl.knaw.huygens.tei.Context
 import nl.knaw.huygens.tei.DelegatingVisitor
 import nl.knaw.huygens.tei.Element

@@ -3,8 +3,6 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 import java.util.ArrayDeque
 import java.util.Deque
 import nl.knaw.huc.di.elaborate.elabctl.archiver.AnnotationBodyConverter.DelHandler
-import nl.knaw.huygens.tei.Comment
-import nl.knaw.huygens.tei.CommentHandler
 import nl.knaw.huygens.tei.DelegatingVisitor
 import nl.knaw.huygens.tei.Element
 import nl.knaw.huygens.tei.ElementHandler
@@ -256,12 +254,6 @@ internal class TranscriptionVisitor(
             return NEXT
         }
 
-    }
-
-    class IgnoreCommentHandler : CommentHandler<XmlContext> {
-        override fun visitComment(p0: Comment?, p1: XmlContext?): Traversal {
-            return STOP
-        }
     }
 
     companion object {

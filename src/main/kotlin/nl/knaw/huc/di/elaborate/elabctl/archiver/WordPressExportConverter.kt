@@ -66,9 +66,9 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                 .filter { node -> node.status() == "publish" }
                 .forEach { itemNode ->
                     val content = itemNode.getString("./content:encoded/text()")
-                    val link = itemNode.getString("./link/text()")
+                    val link = itemNode.getString("./link/text()").trim()
                     val creator = itemNode.getString("./dc:creator/text()")
-                    val title = itemNode.getString("./title/text()")
+                    val title = itemNode.getString("./title/text()").trim()
                     val postName = itemNode.postName()
                     val lastModified = itemNode.getString("./wp:post_modified/text()")
 //                    logNode(title, lastModified, link, postName, creator, content)
