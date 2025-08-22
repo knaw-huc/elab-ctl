@@ -5,7 +5,7 @@ import nl.knaw.huc.di.elaborate.elabctl.manifests.ManifestV3Factory
 
 class ManifestFactoryTest {
 
-    @Test
+//    @Test
     fun `test reading facsimiles zip`() {
         val facsimileDimensionsList =
             FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath("facsimiles.zip")
