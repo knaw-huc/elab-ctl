@@ -374,24 +374,24 @@ object TEIBuilder {
         return visitor.context.result.unwrapFromXml()
     }
 
-    private fun String.setParagraphs0(divType: String, lang: String): String {
-        val paraCounter = AtomicInt(1)
-        return this.split("\n")
-            .filter { it.isNotBlank() }
-            .joinToString("\n") {
-                if (it.startsWith("<space ") || it == ENCODED_PAGE_BREAK) {
-                    it
-                } else {
-                    val n = paraCounter.andIncrement
-                    val indent = if (it.startsWith(" ")) {
-                        " rend=\"indent\""
-                    } else {
-                        ""
-                    }
-                    "<p xml:id=\"p.$divType.$lang.$n\" n=\"$n\"$indent>${it.trim()}</p>"
-                }
-            }
-    }
+//    private fun String.setParagraphs0(divType: String, lang: String): String {
+//        val paraCounter = AtomicInt(1)
+//        return this.split("\n")
+//            .filter { it.isNotBlank() }
+//            .joinToString("\n") {
+//                if (it.startsWith("<space ") || it == ENCODED_PAGE_BREAK) {
+//                    it
+//                } else {
+//                    val n = paraCounter.andIncrement
+//                    val indent = if (it.startsWith(" ")) {
+//                        " rend=\"indent\""
+//                    } else {
+//                        ""
+//                    }
+//                    "<p xml:id=\"p.$divType.$lang.$n\" n=\"$n\"$indent>${it.trim()}</p>"
+//                }
+//            }
+//    }
 
     private fun String.setPageBreaks(divType: String, lang: String): String =
         this.replace("""<hi rend="bold">$ENCODED_PAGE_BREAK</hi>""", ENCODED_PAGE_BREAK)

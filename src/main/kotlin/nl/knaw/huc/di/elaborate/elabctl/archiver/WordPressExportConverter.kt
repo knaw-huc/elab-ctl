@@ -188,24 +188,24 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
         }
     }
 
-    private fun logNode(
-        title: String,
-        lastModified: String,
-        link: String,
-        postName: String,
-        creator: String,
-        content: String
-    ) {
-        logger.info {
-            """item:
-      title=$title
-      modified=$lastModified
-      link=$link
-      post-name='$postName'
-      creator='$creator'
-      content='$content'"""
-        }
-    }
+//    private fun logNode(
+//        title: String,
+//        lastModified: String,
+//        link: String,
+//        postName: String,
+//        creator: String,
+//        content: String
+//    ) {
+//        logger.info {
+//            """item:
+//      title=$title
+//      modified=$lastModified
+//      link=$link
+//      post-name='$postName'
+//      creator='$creator'
+//      content='$content'"""
+//        }
+//    }
 
     private fun Node.postName(): String =
         getString("./wp:post_name/text()")
@@ -230,21 +230,21 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
         xpath.compile(xpathExpression)
             .evaluate(this, XPathConstants.NODESET) as NodeList
 
-    private fun Node.getNode(xpathExpression: String): Node =
-        xpath.compile(xpathExpression)
-            .evaluate(this, XPathConstants.NODE) as Node
-
-    private fun Node.getNumber(xpathExpression: String): Number =
-        xpath.compile(xpathExpression)
-            .evaluate(this, XPathConstants.NUMBER) as Number
+//    private fun Node.getNode(xpathExpression: String): Node =
+//        xpath.compile(xpathExpression)
+//            .evaluate(this, XPathConstants.NODE) as Node
+//
+//    private fun Node.getNumber(xpathExpression: String): Number =
+//        xpath.compile(xpathExpression)
+//            .evaluate(this, XPathConstants.NUMBER) as Number
 
     private fun Node.getString(xpathExpression: String): String =
         xpath.compile(xpathExpression)
             .evaluate(this, XPathConstants.STRING) as String
 
-    private fun Node.getBoolean(xpathExpression: String): Boolean =
-        xpath.compile(xpathExpression)
-            .evaluate(this, XPathConstants.BOOLEAN) as Boolean
+//    private fun Node.getBoolean(xpathExpression: String): Boolean =
+//        xpath.compile(xpathExpression)
+//            .evaluate(this, XPathConstants.BOOLEAN) as Boolean
 
     private fun WordPressExportConverter.exportElementInventory() {
         val elementNames = elementInventoryVisitor.elementNames()
