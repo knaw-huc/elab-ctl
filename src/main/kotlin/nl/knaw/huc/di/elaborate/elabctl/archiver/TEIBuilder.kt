@@ -8,6 +8,7 @@ import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
+import nl.knaw.huc.di.elaborate.elabctl.config.PageBreakEncoding
 import nl.knaw.huc.di.elaborate.elabctl.logger
 import nl.knaw.huygens.tei.Document
 
@@ -153,7 +154,7 @@ object TEIBuilder {
                                 .convertVerticalSpace()
                                 .convertHorizontalSpace()
                                 .setParagraphs(divType, lang)
-                                .setPageBreaks(divType, lang)
+                                .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
                                 .wrapLines(80)
                                 .wrapSpaceElementWithNewLines()
                                 .replace("\n\n\n", "\n\n")
@@ -393,17 +394,35 @@ object TEIBuilder {
 //            }
 //    }
 
-    private fun String.setPageBreaks(divType: String, lang: String): String =
-        this.replace("""<hi rend="bold">$ENCODED_PAGE_BREAK</hi>""", ENCODED_PAGE_BREAK)
-            .split(ENCODED_PAGE_BREAK)
-            .mapIndexed { i, t ->
-                if (i == 0) {
-                    t
-                } else {
-                    "\n<pb xml:id=\"pb.$divType.$lang.$i\" f=\"$i\" facs=\"#s$i\" n=\"$i\"/>\n$t"
+    private fun String.setPageBreaks(divType: String, lang: String, pageBreakEncoding: PageBreakEncoding): String =
+        when (pageBreakEncoding) {
+            PageBreakEncoding.PILCROW -> this
+                .replace("""<hi rend="bold">$ENCODED_PAGE_BREAK</hi>""", ENCODED_PAGE_BREAK)
+                .split(ENCODED_PAGE_BREAK)
+                .mapIndexed { i, t ->
+                    if (i == 0) {
+                        t
+                    } else {
+                        "\n<pb xml:id=\"pb.$divType.$lang.$i\" f=\"$i\" facs=\"#s$i\" n=\"$i\"/>\n$t"
+                    }
                 }
+                .joinToString("")
+
+            PageBreakEncoding.PAGE_BREAK_MARKER -> {
+                var str = this
+                if (!this.contains("[1]")) {
+                    str = "[1]$str"
+                }
+                str.addPageBreaks(divType, lang)
             }
-            .joinToString("")
+        }
+
+    val pbRegex = Regex("\\[(\\d+)]")
+    fun String.addPageBreaks(divType: String, lang: String): String =
+        pbRegex.replace(this) { matchResult ->
+            val number = matchResult.groupValues[1]
+            "<pb xml:id=\"pb.$divType.$lang.$number\" f=\"$number\" facs=\"#s$number\" n=\"$number\"/>"
+        }
 
     private fun String.wrapLines(width: Int): String {
         val result = StringBuilder()

@@ -4,3 +4,4 @@ editor:
   id: ak
   url: https://viaf.org/en/viaf/94004977
 divRole: doc-sections
+pageBreakEncoding: PILCROW
