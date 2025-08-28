@@ -19,17 +19,27 @@ class ElementInventoryVisitor() : DelegatingVisitor<XmlContext>(XmlContext()) {
 
     fun elementInventory(): Map<String, Collection<String>> = elementInventory.asMap()
     fun elementNames(): List<String> = elementSet.sorted()
+    fun elementParents(): Map<String, Collection<String>> = elementParents.asMap()
 
     internal class DefaultElementHandler : ElementHandler<XmlContext> {
+        val wrapElement = "xml"
         override fun enterElement(element: Element, context: XmlContext): Traversal {
+            val parent = parentElements.firstOrNull()
             val name: String = element.name
+            if (parent != null && parent.name != wrapElement) {
+                elementParents.put(name, parent.name)
+            }
             val attributes = element.attributes.keys
-            elementSet.add(name)
-            elementInventory.putAll(name, attributes)
+            if (name != wrapElement) {
+                elementSet.add(name)
+                elementInventory.putAll(name, attributes)
+            }
+            parentElements.addFirst(element)
             return NEXT
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            parentElements.removeFirst()
             return NEXT
         }
     }
@@ -37,6 +47,8 @@ class ElementInventoryVisitor() : DelegatingVisitor<XmlContext>(XmlContext()) {
     companion object {
         val elementSet = mutableSetOf<String>()
         val elementInventory: TreeMultimap<String, String> = TreeMultimap.create<String, String>()
+        val parentElements = ArrayDeque<Element>()
+        val elementParents: TreeMultimap<String, String> = TreeMultimap.create<String, String>()
     }
 }
 

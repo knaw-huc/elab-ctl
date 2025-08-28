@@ -19,7 +19,7 @@ class WordPressExportConverterTest {
     private fun testWPExportForProject(projectName: String) {
         val wpePath = "data/${projectName.replace("elab4-", "")}-wpe.xml"
         val outputDir = "out"
-        val conversionConfig = ElabCtlConfig(projectName, EditorConfig("id", "name", "url"))
+        val conversionConfig = ElabCtlConfig(projectName, EditorConfig("id", "name", "url"), "original")
         val errors = WordPressExportConverter(outputDir, conversionConfig).convert(wpePath)
         assert(errors.isEmpty())
     }

@@ -95,41 +95,6 @@ Waar ik al een conversie zag heb ik deze ingevuld.
 Kunnen jullie bij de overige tags en attributen
 aangeven hoe deze naar Editem TEI geconverteerd moeten worden?
 
-| HTML | attr | TEI | attr             | comment |
-|------|------|-----|------------------|---------|
-| a | href | ref | target           |         |
-|  | name |     |                  |         |
-| button | onclick |     |                  |         |
-|  | style |     |                  |         |
-| em |  | hi  | rend="italics"   |         |
-| h2 |  |     |                  |         |
-| h3 | style |     |                  |         |
-| i | style | hi  | rend="italics"   |         |
-| iframe | allowfullscreen |     |                  |         |
-|  | frameborder |     |                  |         |
-|  | height |     |                  |         |
-|  | src |     |                  |         |
-|  | width |     |                  |         |
-| img | alt |     |                  |         |
-|  | class |     |                  |         |
-|  | height |     |                  |         |
-|  | src |     |                  |         |
-|  | style |     |                  |         |
-|  | width |     |                  |         |
-| li |  |     |                  |         |
-| ol |  |     |                  |         |
-| p | style | p   |                  |         |
-| span | style |     |                  |         |
-| strong |  | hi  | rend="bold"      |         |
-| sup |  | hi  | rend="super"     |         |
-| table | width |     |                  |         |
-| tbody |  |     |                  |         |
-| td | style |     |                  |         |
-|  | width |     |                  |         |
-| tr |  |     |                  |         |
-| u |  | hi  | rend="underline" |         |
-| ul |  |     |                  |         |
-
 
 ## Brieftitels
 
@@ -143,3 +108,77 @@ Bij correspondenten-1900 zitten wat entry titels die zich niet zo laten omvormen
 -  Jelgersma, Gerbrandus aan Kloos, Willem Johannes Theodorus --> Witsen, Willem Arnoldus | 1895-05-10 (doorgestuurde brief)
 
 Hoe moet de standaard brieftitel er in deze gevallen uitzien?
+
+
+## Uitgebreide HTML -> TEI table:
+
+> Wat in sommige gevallen alvast zou helpen is de context waarin de HTML elementen worden gebruikt
+
+In de `in` kolom staan de aangetroffen directe parent elementen: `li` komt dus voor binnen `ol` of `ul` elementen.
+Staat er niets in `in`, dan komen de elementen direct in de "root" voor, oftewel in `body` als het een volledige html pagina zou zijn, in plaats van een html selectie.
+
+| HTML | in | attr | TEI | attr | comment |
+|------|------|-----|-----|------|---------|
+| a | center, em, h2, li, p, span, sup, u | href |     |      |         |
+|  |  | name |     |      |         |
+|  |  | target |     |      |         |
+|  |  | title |     |      |         |
+| br | h1 |  |     |      |         |
+| button | tr | onclick |     |      |         |
+|  |  | style |     |      |         |
+| center |  |  |     |      |         |
+| em | a, center, h3, h4, i, li, p, span, strong, td | style |     |      |         |
+| h1 |  |  |     |      |         |
+| h2 |  | style |     |      |         |
+| h3 |  | style |     |      |         |
+| h4 |  |  |     |      |         |
+| i | a, button, center | style |     |      |         |
+| iframe |  | allowfullscreen |     |      |         |
+|  |  | frameborder |     |      |         |
+|  |  | height |     |      |         |
+|  |  | src |     |      |         |
+|  |  | width |     |      |         |
+| img | a, center, td | alt |     |      |         |
+|  |  | class |     |      |         |
+|  |  | height |     |      |         |
+|  |  | src |     |      |         |
+|  |  | style |     |      |         |
+|  |  | width |     |      |         |
+| li | ol, ul |  |     |      |         |
+| ol |  | style |     |      |         |
+| p |  | style |     |      |         |
+| span |  | style |     |      |         |
+| strong | em, h3, h4 |  |     |      |         |
+| sup | em, li |  |     |      |         |
+| table | center | width |     |      |         |
+| tbody | table |  |     |      |         |
+| td | tbody, tr | style |     |      |         |
+| tr | tbody, td |  |     |      |         |
+| u | em |  |     |      |         |
+| ul | li |  |     |      |         |
+
+> De 'divRole' is inmiddels een verplicht attribuut op de 'body'
+
+OK, aangezien bolland-cosijn en brieven-correspondenten beide slechts 1 `<div>` in hun `<body>` hebben zet ik die `divRole` op `doc-versions`
+
+Zie:
+- https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn/-/commit/b2247697d4965efb3c35e908608441a4c686d40a
+- https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900/-/commit/47fab10d91f4d5d5b80b613397d889c7a0f9120e
+
+> het metadataveld "PlaatsVanSchrijven" .. kan als `placeName` in de `correspAction` worden opgenomen
+
+Gedaan:
+
+- https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn/-/commit/bf4a61cb3e5a4dfc8df6827490dd0bd1349ff438
+
+
+Deze conversie aanvullingen komen er nog aan:
+
+> bolland-cosijn: uitlijning, alineascheiding overnemen  
+
+> pagina-overgang herkenning in bolland-cosijn
+
+> Het 'ref' attribuut op het 'rs' element in de 'correspAction' is optioneel. Als er veel correspondenten zijn ligt het voor de hand om deze te gebruiken om te verwijzen naar een biolist.xml;
+
+> of de annotaties van ‘Persoon waaraan gerefereerd wordt’ en ‘Publicatie waaraan gerefereerd wordt’ kunnen worden opgelost met een 'ref' naar een externe XML bestand (bio.xml of biblio.xml)
+

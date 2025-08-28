@@ -43,6 +43,10 @@ brieven-correspondenten-1900-rsync:
 	rsync -rav build/zip/elab4-$(BRICOR)/* ~/workspaces/editem/elaborate-export/$(BRICOR)/tei/
 	cd ~/workspaces/editem/elaborate-export/$(BRICOR) && (git commit -a -m "new elaborate export" && git push)
 
+.PHONY: browse-brieven-correspondenten-1900
+browse-brieven-correspondenten-1900:
+	@open https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900
+
 # correspondentie-bolland-en-cosijn
 .PHONY: correspondentie-bolland-en-cosijn
 correspondentie-bolland-en-cosijn:
@@ -53,6 +57,11 @@ correspondentie-bolland-en-cosijn:
 correspondentie-bolland-en-cosijn-rsync:
 	rsync -rav build/zip/elab4-$(BOLCOS)/* ~/workspaces/editem/elaborate-export/$(BOLCOS)/tei/
 	cd ~/workspaces/editem/elaborate-export/$(BOLCOS) && (git commit -a -m "new elaborate export" && git push)
+
+.PHONY: browse-correspondentie-bolland-en-cosijn
+browse-correspondentie-bolland-en-cosijn:
+	@open https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn
+
 
 .PHONY: help
 help:
@@ -65,9 +74,11 @@ help:
 	@echo "  drafts-list   - to list the available drafts"
 	@echo "  editions-list - to list the available editions"
 	@echo
-	@echo "  $(BRICOR) - to run the tei export for $(BRICOR)"
-#	@echo "  $(BRICOR)-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BRICOR)"
-
-	@echo "  $(BOLCOS) - to run the tei export for $(BOLCOS)"
-#	@echo "  $(BOLCOS)-rsync - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BOLCOS)"
+	@echo "  $(BRICOR)        - to run the tei export for $(BRICOR)"
+	@echo "  $(BRICOR)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BRICOR)"
+	@echo "  browse-$(BRICOR) - to open the $(BRICOR) gitlab repo in your browser"
+	@echo
+	@echo "  $(BOLCOS)        - to run the tei export for $(BOLCOS)"
+	@echo "  $(BOLCOS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BOLCOS)"
+	@echo "  browse-$(BOLCOS) - to open the $(BOLCOS) gitlab repo in your browser"
 

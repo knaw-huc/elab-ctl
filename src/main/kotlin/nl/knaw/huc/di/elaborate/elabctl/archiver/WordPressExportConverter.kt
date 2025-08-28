@@ -249,16 +249,18 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
     private fun WordPressExportConverter.exportElementInventory() {
         val elementNames = elementInventoryVisitor.elementNames()
         val elementInventory = elementInventoryVisitor.elementInventory()
+        val elementParents = elementInventoryVisitor.elementParents()
         val mdBuilder = StringBuilder().append(
-            """| HTML | attr | TEI | attr | comment |
-|------|------|-----|------|---------|
+            """| HTML | in | attr | TEI | attr | comment |
+|------|------|-----|-----|------|---------|
 """
         )
         var lastKey = ""
         elementNames.forEach { name ->
             val attributes = elementInventory[name]
+            val parentElements = elementParents[name]?.joinToString(", ") ?: ""
             if (attributes == null) {
-                val row = "| $name |  |     |      |         |\n"
+                val row = "| $name | $parentElements |  |     |      |         |\n"
                 mdBuilder.append(row)
 
             } else {
@@ -269,7 +271,8 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                         lastKey = name
                         name
                     }
-                    val row = "| $element | $attribute |     |      |         |\n"
+                    val parents = if (element.isNotBlank()) parentElements else ""
+                    val row = "| $element | $parents | $attribute |     |      |         |\n"
                     mdBuilder.append(row)
                 }
             }

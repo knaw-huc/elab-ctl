@@ -138,7 +138,7 @@ object TEIBuilder {
             val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
             "text" {
                 "body" {
-//                    attribute("divRole", "original")
+                    attribute("divRole", conversionConfig.divRole)
                     parallelTexts
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
@@ -151,6 +151,7 @@ object TEIBuilder {
                                 .transform(layerAnnotationMap)
                                 .removeLineBreaks()
                                 .convertVerticalSpace()
+                                .convertHorizontalSpace()
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang)
                                 .wrapLines(80)
@@ -213,7 +214,7 @@ object TEIBuilder {
     ) {
         val senders = (metadataMap["Afzender"] ?: "").split("/")
         val date = metadataMap["Datum"] ?: ""
-        val place = metadataMap["Plaats"] ?: ""
+        val place = metadataMap["Plaats"] ?: metadataMap["Plaats van schrijven"] ?: ""
         "correspAction" {
             attribute("type", "sent")
             senders
@@ -273,7 +274,7 @@ object TEIBuilder {
         val visitor = TranscriptionVisitor(annotationMap = annotationMap)
         val wrapped = this
             .replace("\u00A0", " ")
-            .replace("&nbsp;", " ")
+            .replace("&nbsp;", "<nbsp/>")
             .replace(Regex(" +"), " ")
 
             .replaceWhileFound(" <br>", "<br>")
@@ -309,7 +310,7 @@ object TEIBuilder {
             .replace("<br>", "<br/>\n")
             .trim()
             .wrapInXml()
-        val doc = nl.knaw.huygens.tei.Document.createFromXml(wrapped, false)
+        val doc = Document.createFromXml(wrapped, false)
         doc.accept(visitor)
         val result = visitor.context.result
         if (!result.isWellFormed()) {
@@ -320,6 +321,9 @@ object TEIBuilder {
             .replace("\u00A0", " ")
             .replace(" </hi>", "</hi> ")
             .replace("</p>", "</p>\n")
+            .replace("<nbsp></nbsp>", "<nbsp/>")
+            .replace(" <nbsp/>", "<nbsp/><nbsp/>")
+            .replace("<nbsp/> ", "<nbsp/><nbsp/>")
     }
 
     private fun String.replaceWhileFound(oldValue: String, newValue: String): String {
@@ -343,9 +347,18 @@ object TEIBuilder {
         this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
 
     const val SPACE_ELEMENT_LINE = "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n"
-    private fun String.convertVerticalSpace(): String {
-        return this.replace(Regex("\n\\s*\n"), SPACE_ELEMENT_LINE)
-    }
+    private fun String.convertVerticalSpace(): String =
+        this.replace(Regex("\n\\s*\n"), SPACE_ELEMENT_LINE)
+
+    fun horizontalSpaceTag(quantity: Int): String =
+        "<space dim=\"horizontal\" unit=\"chars\" quantity=\"$quantity\"/>"
+
+    val regex = "(?:<nbsp/>)+".toRegex()
+    fun String.convertHorizontalSpace(): String =
+        regex.replace(this) { matchResult ->
+            val count = matchResult.value.length / "<nbsp/>".length
+            horizontalSpaceTag(count)
+        }
 
     private fun String.wrapSpaceElementWithNewLines(): String =
         this.replace(
