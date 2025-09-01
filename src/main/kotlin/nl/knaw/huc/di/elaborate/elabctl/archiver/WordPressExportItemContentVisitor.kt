@@ -18,6 +18,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         setDefaultElementHandler(DefaultElementHandler())
         addElementHandler(RefHandler(), "a")
         addElementHandler(BrHandler(), "br")
+        addElementHandler(AsCommentHandler(), "button", "iframe")
 //        addElementHandler(RemoveAttributesHandler(), "p")
 //        addElementHandler(ImgHandler(), "img")
     }
@@ -74,6 +75,27 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             if (closeElement) {
                 context.addCloseTag(closingElement)
+            }
+            return NEXT
+        }
+    }
+
+    internal class AsCommentHandler() : ElementHandler<XmlContext> {
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            context.apply {
+                addLiteral("<!-- ")
+                addOpenTag(element)
+                addLiteral(" -->")
+            }
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            context.apply {
+                addLiteral("<!-- ")
+                addCloseTag(element)
+                addLiteral(" -->")
             }
             return NEXT
         }
