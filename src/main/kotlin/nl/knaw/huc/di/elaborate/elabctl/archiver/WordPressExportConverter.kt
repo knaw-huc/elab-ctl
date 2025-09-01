@@ -154,18 +154,26 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             }
         }.toString(printOptions = printOptions)
 
+    val wpCaptionRegexp = "\\[caption ([^]]*)]".toRegex()
+    val emptyHiExp = "<hi rend=\"[^\"]*\"></hi>".toRegex()
+
     private fun asTEI(htmlContent: String): String {
         val cleaned = htmlContent
             .replace("[print-me]", "")
             .replace("[SIPC_Content]", "")
+            .replace("[/SIPC_Content]", "")
             .replace("<div style=\"width:600px;\">", "")
             .replace("&nbsp;", " ")
             .replace("<br>", "<br/>")
+            .replace("</h2>\n<h2>", "")
             .trim()
-        val tei = if (!cleaned.wrapInXml().isWellFormed()) {
-            cleaned.fixXhtml()
+        val wpCaptionReplaced =
+            wpCaptionRegexp.replace(cleaned) { "<wpcaption ${it.groups[1]?.value}>" }
+                .replace("[/caption]", "</wpcaption>")
+        val tei = if (!wpCaptionReplaced.wrapInXml().isWellFormed()) {
+            wpCaptionReplaced.fixXhtml()
         } else {
-            cleaned
+            wpCaptionReplaced
         }
         val wrapped = tei.wrapInXml()
         return if (wrapped.isWellFormed()) {
@@ -181,7 +189,9 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                 .replace(" </hi>", "</hi> ")
                 .replace("</p>", "</p>\n")
 
-            "\n\n$fixed\n\n"
+            val withEmptyHiRemoved = emptyHiExp.replace(fixed) { "" }
+
+            "\n\n$withEmptyHiRemoved\n\n"
         } else {
             logger.error { "HTML not well-formed" }
             "\n\n<!-- NOT WELL-FORMED! -->\n$tei\n\n"
