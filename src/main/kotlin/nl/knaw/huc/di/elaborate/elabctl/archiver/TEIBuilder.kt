@@ -16,6 +16,7 @@ object TEIBuilder {
 
     val HI_TAGS: Map<String, String> = mapOf(
         "strong" to "bold",
+        "center" to "center",
         "b" to "bold",
         "u" to "underline",
         "em" to "italics",
