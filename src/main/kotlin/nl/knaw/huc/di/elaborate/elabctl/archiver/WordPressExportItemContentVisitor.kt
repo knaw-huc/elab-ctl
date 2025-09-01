@@ -19,7 +19,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(RefHandler(), "a")
         addElementHandler(BrHandler(), "br")
         addElementHandler(AsCommentHandler(), "button", "iframe")
-//        addElementHandler(RemoveAttributesHandler(), "p")
+        addElementHandler(RemoveAttributesHandler(), "p")
 //        addElementHandler(ImgHandler(), "img")
     }
 
