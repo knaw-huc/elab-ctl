@@ -153,7 +153,7 @@ object TEIBuilder {
                                 .transform(layerAnnotationMap)
                                 .removeLineBreaks()
                                 .convertVerticalSpace()
-//                                .convertHorizontalSpace()
+                                .convertHorizontalSpace()
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
                                 .wrapLines(80)
@@ -357,10 +357,12 @@ object TEIBuilder {
 
     val regex = "(?:<nbsp/>)+".toRegex()
     fun String.convertHorizontalSpace(): String =
-        regex.replace(this) { matchResult ->
-            val count = matchResult.value.length / "<nbsp/>".length
-            horizontalSpaceTag(count)
-        }
+        this.replace("<nbsp/>", " ")
+//    fun String.convertHorizontalSpace(): String =
+//        regex.replace(this) { matchResult ->
+//            val count = matchResult.value.length / "<nbsp/>".length
+//            horizontalSpaceTag(count)
+//        }
 
     private fun String.wrapSpaceElementWithNewLines(): String =
         this.replace(
