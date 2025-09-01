@@ -1,6 +1,7 @@
 package nl.knaw.huc.di.elaborate.elabctl.apparatus
 
 import java.util.zip.ZipFile
+import com.google.common.collect.TreeMultimap
 import kotlinx.serialization.json.decodeFromStream
 import nl.knaw.huc.di.elaborate.elabctl.archiver.AnnotationData
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.json
@@ -11,42 +12,49 @@ class ApparatusGenerator {
     fun generate(warPath: String) {
         val personMetadataFields = listOf("Afzender", "Ontvanger")
         val personNames = mutableSetOf<String>()
-        val bibl = mutableSetOf<String>()
+        val annoNumForBioText = TreeMultimap.create<String, String>()
+        val annoNumForBiblText = TreeMultimap.create<String, String>()
         ZipFile(warPath).use { zip ->
             val elabConfigEntry = zip.getEntry("data/config.json")
             val elabConfig: EditionConfig = zip.getInputStream(elabConfigEntry).use { input ->
                 json.decodeFromStream(input)
             }
-            val entries = elabConfig.entries
-            entries.forEach {
+            elabConfig.entries.forEach {
                 val entry = loadEntry(zip, it)
                 val persons =
                     entry.metadata
                         .filter { personMetadataFields.contains(it.field) }
                         .map { it.value }
                 personNames.addAll(persons)
-                val annotatedPersons = entry.parallelTexts
+                entry.parallelTexts
                     .flatMap { it.value.annotationData }
+                    .map { fixAnnotationTypeName(it) }
                     .filter { it.type.name == "Persoon" }
-                    .map { it.normalizeAnnotationText() }
-                personNames.addAll(annotatedPersons)
-                val annotatedBibl = entry.parallelTexts
+                    .map { it.n.toString() to it.normalizeAnnotationText() }
+                    .forEach { p ->
+                        annoNumForBioText[p.second].add(p.first)
+                    }
+                entry.parallelTexts
                     .flatMap { it.value.annotationData }
+                    .map { fixAnnotationTypeName(it) }
                     .filter { it.type.name == "Publicatie" }
-                    .map { it.normalizeAnnotationText() }
-                bibl.addAll(annotatedBibl)
+                    .map { it.n.toString() to it.normalizeAnnotationText() }
+                    .forEach { p ->
+                        annoNumForBiblText[p.second].add(p.first)
+                    }
+
                 entry.facsimiles.forEach {
                 }
 
             }
         }
         println("Persons")
-        personNames.sorted().forEach {
-            println("-  $it")
+        annoNumForBioText.keySet().sorted().forEach {
+            println("-  $it [ in ${annoNumForBioText[it].sorted()}]")
         }
         println("Publications")
-        bibl.sorted().forEach {
-            println("-  $it")
+        annoNumForBiblText.keySet().sorted().forEach {
+            println("-  $it [ in ${annoNumForBiblText[it].sorted()}]")
         }
     }
 
@@ -59,6 +67,8 @@ class ApparatusGenerator {
             .replace("<u></u>", "")
             .replace(".</em>", "</em>.")
             .replace("'</em>", "</em>'")
+            .replace("'Zum <em>Beowulf</em>'.", "\"Zum <em>Beowulf</em>.\"")
+            .replace("(1857-1913,", "(1857-1913),")
             .trim()
         return if (!normalized.endsWith(".")) {
             "$normalized."
@@ -67,4 +77,11 @@ class ApparatusGenerator {
         }
     }
 
+    private fun fixAnnotationTypeName(data: AnnotationData): AnnotationData =
+        if (data.text == "<em>De Gids.</em>") {
+            data.copy(type = data.type.copy(name = "Publication"))
+        } else {
+            data
+        }
 }
+
