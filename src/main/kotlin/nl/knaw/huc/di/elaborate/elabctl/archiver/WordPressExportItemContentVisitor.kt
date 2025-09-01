@@ -16,9 +16,9 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         setTextHandler(XmlTextHandler())
         setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
+        addElementHandler(RefHandler(), "a")
         addElementHandler(BrHandler(), "br")
 //        addElementHandler(RemoveAttributesHandler(), "p")
-//        addElementHandler(RefHandler(), "a")
 //        addElementHandler(ImgHandler(), "img")
     }
 
@@ -49,15 +49,32 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
     }
 
     internal class RefHandler() : ElementHandler<XmlContext> {
-
+        var closeElement = true
+        var closingElement = ""
         override fun enterElement(element: Element, context: XmlContext): Traversal {
-            val newElement = Element("ref").withAttribute("target", element.getAttribute("href"))
-            context.addOpenTag(newElement)
+            if (element.hasAttribute("href")) {
+                val newElement = if (element.getAttribute("href").contains("#_ftn")) {
+                    Element("ptr").withAttribute("target", element.getAttribute("href"))
+                } else {
+                    Element("ref").withAttribute("target", element.getAttribute("href"))
+                }
+                context.addOpenTag(newElement)
+                closeElement = true
+                closingElement = newElement.name
+
+            } else {
+                val newElement = Element("anchor").withAttribute("xml:id", element.getAttribute("name"))
+                context.addEmptyElementTag(newElement)
+                closeElement = false
+
+            }
             return NEXT
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
-            context.addCloseTag("ref")
+            if (closeElement) {
+                context.addCloseTag(closingElement)
+            }
             return NEXT
         }
     }
