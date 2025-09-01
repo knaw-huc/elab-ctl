@@ -23,13 +23,14 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "bullet")), "ul")
         addElementHandler(ElementReplaceHandler(Element("cell")), "td")
         addElementHandler(ElementReplaceHandler(Element("row")), "tr")
-        addElementHandler(AsCommentHandler(), "button", "iframe")
+        addElementHandler(AsCommentHandler(), "button", "iframe", "wpcaption")
         addElementHandler(AnnotationBodyConverter.IgnoreElementHandler(), "tbody")
         addElementHandler(RemoveAttributesHandler(), "p", "table")
         addElementHandler(AsHeadHandler("level1"), "h1")
         addElementHandler(AsHeadHandler("level2"), "h2")
         addElementHandler(AsHeadHandler("level3"), "h3")
         addElementHandler(AsHeadHandler("level4"), "h4")
+//        addElementHandler(WPCaptionHandler(), "wpcaption")
         addElementHandler(ImgHandler(), "img")
     }
 
@@ -41,6 +42,24 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            return NEXT
+        }
+    }
+
+    internal class WPCaptionHandler() : ElementHandler<XmlContext> {
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            inWpCaption = true
+            context.openLayer()
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+//            val captionXml = context.closeLayer()
+            val layerXml = context.closeLayer()
+            context.addLiteral(layerXml)
+//            context.addComment(captionXml)
+            inWpCaption = false
             return NEXT
         }
     }
@@ -72,7 +91,6 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
                     .withAttribute("width", element.getAttribute("width"))
                     .withAttribute("height", element.getAttribute("height"))
                 addEmptyElementTag(graphic)
-
             }
 
             return NEXT
@@ -80,6 +98,9 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             context.addCloseTag("figure")
+//            if (inWpCaption) {
+//                context.openLayer()
+//            }
             return NEXT
         }
     }
@@ -186,6 +207,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
 
     companion object {
         private val openElements: Deque<Element> = ArrayDeque()
+        private var inWpCaption: Boolean = false
     }
 }
 
