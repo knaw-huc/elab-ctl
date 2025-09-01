@@ -18,8 +18,14 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         setDefaultElementHandler(DefaultElementHandler())
         addElementHandler(RefHandler(), "a")
         addElementHandler(BrHandler(), "br")
+        addElementHandler(ElementReplaceHandler(Element("item")), "li")
+        addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "numbered")), "ol")
+        addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "bullet")), "ul")
+        addElementHandler(ElementReplaceHandler(Element("cell")), "td")
+        addElementHandler(ElementReplaceHandler(Element("row")), "tr")
         addElementHandler(AsCommentHandler(), "button", "iframe")
-        addElementHandler(RemoveAttributesHandler(), "p")
+        addElementHandler(AnnotationBodyConverter.IgnoreElementHandler(), "tbody")
+        addElementHandler(RemoveAttributesHandler(), "p", "table")
         addElementHandler(AsHeadHandler("level1"), "h1")
         addElementHandler(AsHeadHandler("level2"), "h2")
         addElementHandler(AsHeadHandler("level3"), "h3")
@@ -35,6 +41,19 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         }
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            return NEXT
+        }
+    }
+
+    internal class ElementReplaceHandler(val replacementElement: Element) : ElementHandler<XmlContext> {
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            context.addOpenTag(replacementElement)
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            context.addCloseTag(replacementElement)
             return NEXT
         }
     }
