@@ -30,7 +30,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(AsHeadHandler("level2"), "h2")
         addElementHandler(AsHeadHandler("level3"), "h3")
         addElementHandler(AsHeadHandler("level4"), "h4")
-//        addElementHandler(ImgHandler(), "img")
+        addElementHandler(ImgHandler(), "img")
     }
 
     internal class BrHandler() : ElementHandler<XmlContext> {
@@ -62,7 +62,19 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
 
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             val newElement = Element("figure")
-            context.addOpenTag(newElement)
+            context.apply {
+                addOpenTag(newElement)
+                addOpenTag("head")
+                addLiteral(element.getAttribute("alt"))
+                addCloseTag("head")
+                val graphic = Element("graphic")
+                    .withAttribute("url", element.getAttribute("src"))
+                    .withAttribute("width", element.getAttribute("width"))
+                    .withAttribute("height", element.getAttribute("height"))
+                addEmptyElementTag(graphic)
+
+            }
+
             return NEXT
         }
 
