@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.elaborate.elabctl.apparatus
+
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
