@@ -16,9 +16,22 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         setTextHandler(XmlTextHandler())
         setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
+        addElementHandler(BrHandler(), "br")
 //        addElementHandler(RemoveAttributesHandler(), "p")
 //        addElementHandler(RefHandler(), "a")
 //        addElementHandler(ImgHandler(), "img")
+    }
+
+    internal class BrHandler() : ElementHandler<XmlContext> {
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            context.addEmptyElementTag("lb")
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            return NEXT
+        }
     }
 
     internal class ImgHandler() : ElementHandler<XmlContext> {
