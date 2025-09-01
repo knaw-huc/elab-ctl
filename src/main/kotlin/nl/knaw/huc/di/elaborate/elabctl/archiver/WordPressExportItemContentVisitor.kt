@@ -19,6 +19,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(RefHandler(), "a")
         addElementHandler(BrHandler(), "br")
         addElementHandler(AsCommentHandler(), "button", "iframe")
+        addElementHandler(CenterHandler(), "center")
 //        addElementHandler(RemoveAttributesHandler(), "p")
 //        addElementHandler(ImgHandler(), "img")
     }
@@ -97,6 +98,21 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
                 addCloseTag(element)
                 addLiteral(" -->")
             }
+            return NEXT
+        }
+    }
+
+    internal class CenterHandler() : ElementHandler<XmlContext> {
+        val newElementName = "hi"
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            val newElement = Element(newElementName).withAttribute("rend", "center")
+            context.addOpenTag(newElement)
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            context.addCloseTag(newElementName)
             return NEXT
         }
     }
