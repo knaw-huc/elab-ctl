@@ -20,6 +20,10 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(BrHandler(), "br")
         addElementHandler(AsCommentHandler(), "button", "iframe")
         addElementHandler(RemoveAttributesHandler(), "p")
+        addElementHandler(AsHeadHandler("level1"), "h1")
+        addElementHandler(AsHeadHandler("level2"), "h2")
+        addElementHandler(AsHeadHandler("level3"), "h3")
+        addElementHandler(AsHeadHandler("level4"), "h4")
 //        addElementHandler(ImgHandler(), "img")
     }
 
@@ -111,6 +115,20 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
 
         override fun leaveElement(element: Element, context: XmlContext): Traversal {
             context.addCloseTag(element)
+            return NEXT
+        }
+    }
+
+    internal class AsHeadHandler(type: String) : ElementHandler<XmlContext> {
+        val headElement: Element = Element("head").withAttribute("type", type)
+
+        override fun enterElement(element: Element, context: XmlContext): Traversal {
+            context.addOpenTag(headElement)
+            return NEXT
+        }
+
+        override fun leaveElement(element: Element, context: XmlContext): Traversal {
+            context.addCloseTag(headElement)
             return NEXT
         }
     }
