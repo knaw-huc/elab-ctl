@@ -153,7 +153,7 @@ object TEIBuilder {
                                 .transform(layerAnnotationMap)
                                 .removeLineBreaks()
                                 .convertVerticalSpace()
-                                .convertHorizontalSpace()
+//                                .convertHorizontalSpace()
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
                                 .wrapLines(80)
