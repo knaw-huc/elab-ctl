@@ -23,7 +23,7 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "bullet")), "ul")
         addElementHandler(ElementReplaceHandler(Element("cell")), "td")
         addElementHandler(ElementReplaceHandler(Element("row")), "tr")
-        addElementHandler(AsCommentHandler(), "button", "iframe", "wpcaption")
+        addElementHandler(AsCommentHandler(), "button", "iframe", "wpcaption", "span")
         addElementHandler(AnnotationBodyConverter.IgnoreElementHandler(), "tbody")
         addElementHandler(RemoveAttributesHandler(), "p", "table")
         addElementHandler(AsHeadHandler("level1"), "h1")
