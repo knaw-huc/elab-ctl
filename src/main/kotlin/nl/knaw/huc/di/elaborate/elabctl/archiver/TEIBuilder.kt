@@ -24,7 +24,6 @@ object TEIBuilder {
         "sub" to "sub",
         "sup" to "super"
     )
-    val VALID_WHEN_REGEX = Regex("\\d\\d\\d\\d-\\d\\d-\\d\\d")
 
     fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig, conversionConfig: ElabCtlConfig): String {
         val printOptions = PrintOptions(
@@ -226,9 +225,8 @@ object TEIBuilder {
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                val w = if (date.length >= 10) date.subSequence(0, 10) else date
-                if (w.matches(VALID_WHEN_REGEX)) {
-                    attribute("when", w)
+                DateRegex.getDateAttributes(date).forEach {
+                    attribute(it.key, it)
                 }
                 -date
             }
@@ -356,13 +354,14 @@ object TEIBuilder {
         "<space dim=\"horizontal\" unit=\"chars\" quantity=\"$quantity\"/>"
 
     val regex = "(?:<nbsp/>)+".toRegex()
+
+    //    fun String.convertHorizontalSpace(): String =
+//        this.replace("<nbsp/>", " ")
     fun String.convertHorizontalSpace(): String =
-        this.replace("<nbsp/>", " ")
-//    fun String.convertHorizontalSpace(): String =
-//        regex.replace(this) { matchResult ->
-//            val count = matchResult.value.length / "<nbsp/>".length
-//            horizontalSpaceTag(count)
-//        }
+        regex.replace(this) { matchResult ->
+            val count = matchResult.value.length / "<nbsp/>".length
+            horizontalSpaceTag(count)
+        }
 
     private fun String.wrapSpaceElementWithNewLines(): String =
         this.replace(
