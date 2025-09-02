@@ -112,7 +112,7 @@ object TEIBuilder {
                         val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
                         correspActionNode(projectConfig, "received", firstReceivers)
                         forwardReceivers?.let {
-                            correspActionNode(projectConfig, "received-after-forward", forwardReceivers)
+                            correspActionNode(projectConfig, "received", forwardReceivers)
                         }
                     }
                 }
