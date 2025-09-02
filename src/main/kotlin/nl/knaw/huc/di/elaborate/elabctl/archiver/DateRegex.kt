@@ -1,8 +1,10 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.YearMonth
+import org.apache.logging.log4j.kotlin.logger
 
 enum class DateRegex(val pattern: Regex) {
+    UNCERTAIN_DATE(Regex("\\[\\d{4}-\\d{2}-\\d{2}]")),
     VALID_DATE(Regex("\\d{4}-\\d{2}-\\d{2}")),
     UNCERTAIN_DAY_DATE(Regex("\\d{4}-\\d{2}-XX")),           // "1893-02-XX"
     UNCERTAIN_MONTH_DATE(Regex("\\d{4}-XX-XX")),             // "1893-XX-XX"
@@ -28,7 +30,7 @@ enum class DateRegex(val pattern: Regex) {
             val firstYear = 1877
             val lastYear = 1917
             return when (detect(date.replace(" ", ""))) {
-                VALID_DATE -> mapOf("when" to date)
+                VALID_DATE, UNCERTAIN_DATE -> mapOf("when" to date)
 
                 UNCERTAIN_MONTH_DATE -> {
                     val year = date.take(4)
@@ -156,7 +158,11 @@ enum class DateRegex(val pattern: Regex) {
                         "notAfter" to "$lastYear-12-31"
                     )
 
-                null -> throw RuntimeException("unrecognized date pattern: $date")
+                null -> {
+                    logger.warn { "unrecognized date pattern: $date" }
+//                    throw RuntimeException("unrecognized date pattern: $date")
+                    mapOf()
+                }
             }
         }
     }

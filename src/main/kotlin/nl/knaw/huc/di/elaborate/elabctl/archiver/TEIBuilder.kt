@@ -226,7 +226,7 @@ object TEIBuilder {
                 }
             "date" {
                 DateRegex.getDateAttributes(date).forEach {
-                    attribute(it.key, it)
+                    attribute(it.key, it.value)
                 }
                 -date
             }
