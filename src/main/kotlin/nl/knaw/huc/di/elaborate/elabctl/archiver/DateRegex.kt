@@ -57,9 +57,12 @@ enum class DateRegex(val pattern: Regex) {
                     val (first, last) = date.split("+", "_")
                     val firstAttributes = getDateAttributes(first)
                     val lastAttributes = getDateAttributes(last)
+                    val notBefore = firstAttributes["notBefore"] ?: firstAttributes["when"]!!
+                    val notAfter = lastAttributes["notAfter"] ?: lastAttributes["when"]!!
+
                     mapOf(
-                        "notBefore" to (firstAttributes["notBefore"] ?: firstAttributes["when"]!!),
-                        "notAfter" to (lastAttributes["notAfter"] ?: lastAttributes["when"]!!)
+                        "notBefore" to notBefore,
+                        "notAfter" to notAfter
                     )
                 }
 
