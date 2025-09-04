@@ -4,6 +4,7 @@ import java.io.File
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
+import arrow.core.toNonEmptyListOrNull
 import com.google.common.collect.TreeMultimap
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -19,6 +20,7 @@ import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.loadEntry
 import nl.knaw.huc.di.elaborate.elabctl.archiver.EditionConfig
 
 class ApparatusGenerator {
+
     val printOptions = PrintOptions(
         singleLineTextElements = true,
         indent = "  ",
@@ -107,15 +109,15 @@ class ApparatusGenerator {
     }
 
     private fun buildBiblioXml(annoNumForBiblText: TreeMultimap<String, String>): String {
-        val biblXmlNodes = annoNumForBiblText.keySet().mapIndexed { i, p ->
+        val biblXmlNodes = annoNumForBiblText.keySet().mapIndexed { i, biblText ->
             val biblNum = "%03d".format(i + 1)
             xml("bibl") {
                 attribute("xml:id", "bg$biblNum")
-                comment(p)
+                comment(biblText)
                 "label" {
-                    -TAG_REGEX.replace(p, "")
+                    -biblText.asBiblLabelContent()
                 }
-                unsafeText(p.asBiblText())
+                unsafeText(biblText.asBiblText())
             }
         }
 
@@ -161,7 +163,6 @@ class ApparatusGenerator {
         }.toString(printOptions = printOptions)
     }
 
-    val PAGE_RANGE_REGEX = Regex("\\d+-\\d+")
     private fun String.asBiblText(): String {
         val level = when {
             this.startsWith("<em>") -> "j"
@@ -192,12 +193,78 @@ class ApparatusGenerator {
         Path(path).writeText(tei)
     }
 
+    private fun asPerson(bioText: String): ApparatusPerson {
+        val parts = bioText.split(", ", limit = 2)
+        val firstPart = parts[0]
+        var forename = ""
+        var surname = ""
+        var birth: String? = null
+        var death: String? = null
+        var nameParts = mutableListOf("")
+        if (firstPart.contains("(")) {
+            val (namePart, years) = firstPart.split("(", ")")
+            nameParts = namePart.trim().split(" ").toMutableList()
+            val yearParts = years.split("-", "–")
+            birth = yearParts[0]
+            death = yearParts[1]
+        } else {
+            nameParts = firstPart.trim().split(" ").toMutableList()
+        }
+
+        surname = nameParts.removeLast()
+        forename = nameParts
+            .takeWhile { it[0].isUpperCase() }
+            .joinToString(" ")
+        val nameLink = nameParts
+            .filter { it[0].isLowerCase() }
+            .toNonEmptyListOrNull()
+            ?.joinToString(" ")
+
+        val source = if (SOURCE_REGEX.containsMatchIn(bioText)) {
+            SOURCE_REGEX.find(bioText)?.groups[1]?.value
+        } else {
+            null
+        }
+        val note = if (parts.size == 2) {
+            SOURCE_REGEX.replace(parts[1], "").trim('.').trim()
+        } else {
+            null
+        }
+        return ApparatusPerson(forename, nameLink, surname, source, birth, death, note)
+    }
+
     private fun buildBioXml(annoNumForBioText: TreeMultimap<String, String>): String {
-        val personXmlNodes = annoNumForBioText.keySet().mapIndexed { i, p ->
+        val personXmlNodes = annoNumForBioText.keySet().mapIndexed { i, bioText ->
             val persNum = "%03d".format(i)
+            val person = asPerson(bioText)
             xml("person") {
                 attribute("xml:id", "pers$persNum")
-                comment(p)
+                person.source?.let { source ->
+                    attribute("source", source)
+                }
+                comment(bioText)
+                "persName" {
+                    attribute("full", "yes")
+                    "foreName" { -person.forename }
+                    text(" ")
+                    person.nameLink?.let {
+                        text(" ")
+                        "nameLink" { -it }
+                    }
+                    "surname" { -person.surname }
+                }
+                person.birth?.let {
+                    "birth" { attribute("when", it) }
+                }
+                person.death?.let {
+                    "death" { attribute("when", it) }
+                }
+                person.note?.let {
+                    "note" {
+                        attribute("type", "shortDesc")
+                        -it
+                    }
+                }
             }
         }
         return xml("TEI") {
@@ -276,14 +343,33 @@ class ApparatusGenerator {
     }
 
     private fun fixAnnotationTypeName(data: AnnotationData): AnnotationData =
-        if (data.text == "<em>De Gids.</em>" || data.text.startsWith("Brugmann, Karl. <em>") || data.text.startsWith("Paul, Hermann")) {
+        if (data.text == "<em>De Gids.</em>"
+            || data.text.startsWith("Brugmann, Karl. <em>")
+            || data.text.startsWith("Paul, Hermann")
+            || data.text.startsWith("Ellis, Alexander John.")
+        ) {
             data.copy(type = data.type.copy(name = "Publication"))
         } else {
             data
         }
 
+    data class ApparatusPerson(
+        val forename: String,
+        val nameLink: String?,
+        val surname: String,
+        val source: String?,
+        val birth: String?,
+        val death: String?,
+        val note: String?
+    )
+
     companion object {
         val TAG_REGEX = Regex("<[^>]+>")
+        val PAGE_RANGE_REGEX = Regex("\\d+-\\d+")
+        val SOURCE_REGEX = Regex("Zie (http.*)\\.$")
+
+        private fun String.asBiblLabelContent(): String =
+            TAG_REGEX.replace(this, "")
     }
 }
 
