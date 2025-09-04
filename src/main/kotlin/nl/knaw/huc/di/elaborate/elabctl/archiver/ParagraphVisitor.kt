@@ -19,7 +19,7 @@ internal class ParagraphVisitor(divType: String, lang: String) : DelegatingVisit
     init {
         paraCounter.set(2)
         setTextHandler(MyTextHandler(divType, lang, paraCounter))
-        setCommentHandler(IgnoreCommentHandler())
+        setCommentHandler(KeepCommentHandler())
         setDefaultElementHandler(MyElementHandler(divType, lang))
     }
 

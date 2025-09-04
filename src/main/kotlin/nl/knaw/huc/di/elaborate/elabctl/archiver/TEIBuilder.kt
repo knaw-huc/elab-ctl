@@ -2,30 +2,39 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
 import arrow.atomic.AtomicInt
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.decodeFromStream
 import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
+import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.json
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.PageBreakEncoding
 import nl.knaw.huc.di.elaborate.elabctl.logger
 import nl.knaw.huygens.tei.Document
 
-object TEIBuilder {
+@OptIn(ExperimentalSerializationApi::class)
+class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtlConfig) {
+    val annoNumToRefTarget: Map<String, String> by lazy { loadAnnoNumToRefTarget(conversionConfig.annoNumToRefTarget) }
 
-    val HI_TAGS: Map<String, String> = mapOf(
-        "strong" to "bold",
-        "center" to "center",
-        "b" to "bold",
-        "u" to "underline",
-        "em" to "italics",
-        "i" to "italics",
-        "sub" to "sub",
-        "sup" to "super"
-    )
+    private fun loadAnnoNumToRefTarget(annoNumToRefTargetPath: String?): Map<String, String> {
+        return if (annoNumToRefTargetPath == null) {
+            mapOf()
+        } else {
+            logger.info { "<= $annoNumToRefTargetPath" }
+            val input = Path(annoNumToRefTargetPath).inputStream()
+            json.decodeFromStream(input)
+        }
+    }
 
-    fun Entry.toTEI(teiName: String, projectConfig: ProjectConfig, conversionConfig: ElabCtlConfig): String {
+    fun entryToTEI(
+        entry: Entry,
+        teiName: String
+    ): String {
         val printOptions = PrintOptions(
             singleLineTextElements = true,
             indent = "  ",
@@ -33,9 +42,9 @@ object TEIBuilder {
         )
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
-        val metadataMap = metadata.associate { it.field to it.value }
+        val metadataMap = entry.metadata.associate { it.field to it.value }
         val projectName = projectConfig.projectName
-        val title = name
+        val title = entry.name
         val editorName = conversionConfig.editor.name
         val editorId = conversionConfig.editor.id
         val editorUrl = conversionConfig.editor.url
@@ -62,7 +71,7 @@ object TEIBuilder {
                 "fileDesc" {
                     "titleStmt" {
                         "title" {
-                            comment(name)
+                            comment(entry.name)
                             -title
                         }
                         "editor" {
@@ -83,7 +92,7 @@ object TEIBuilder {
                             -currentDate
                         }
                         "ptr" {
-                            attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/$id")
+                            attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/${entry.id}")
                         }
                     }
                     "sourceDesc" {
@@ -117,9 +126,9 @@ object TEIBuilder {
                     }
                 }
             }
-            if (facsimiles.isNotEmpty()) {
+            if (entry.facsimiles.isNotEmpty()) {
                 "facsimile" {
-                    facsimiles.forEachIndexed { i, facs ->
+                    entry.facsimiles.forEachIndexed { i, facs ->
                         "surface" {
                             attribute("n", "${i + 1}")
                             attribute("xml:id", "s${i + 1}")
@@ -131,7 +140,7 @@ object TEIBuilder {
                     }
                 }
             }
-            metadata
+            entry.metadata
                 .filter { it.value.isNotEmpty() }
                 .forEach {
                     comment("${it.field.asType()} = ${it.value}")
@@ -140,16 +149,16 @@ object TEIBuilder {
             "text" {
                 "body" {
                     attribute("divRole", conversionConfig.divRole)
-                    parallelTexts
+                    entry.parallelTexts
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
                             val lang = metadataMap["Taal"]?.asIsoLang() ?: "nl"
                             val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
                             val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
-                            annotationMap.putAll(layerAnnotationMap)
+                            annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
                             val text = textLayer.text
-                                .transform(layerAnnotationMap)
+                                .transform(layerAnnotationMap, annoNumToRefTarget)
                                 .removeLineBreaks()
                                 .convertVerticalSpace()
                                 .convertHorizontalSpace()
@@ -270,8 +279,11 @@ object TEIBuilder {
         }
     }
 
-    private fun String.transform(annotationMap: Map<Long, AnnotationData>): String {
-        val visitor = TranscriptionVisitor(annotationMap = annotationMap)
+    private fun String.transform(
+        annotationMap: Map<Long, AnnotationData>,
+        annoNumToRefTarget: Map<String, String>
+    ): String {
+        val visitor = TranscriptionVisitor(annotationMap = annotationMap, annoNumToRefTarget)
         val wrapped = this
             .replace("\u00A0", " ")
             .replace("&nbsp;", "<nbsp/>")
@@ -343,32 +355,6 @@ object TEIBuilder {
             else -> "nl"
         }
 
-    private fun String.removeLineBreaks(): String =
-        this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
-
-    const val SPACE_ELEMENT_LINE = "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n"
-    private fun String.convertVerticalSpace(): String =
-        this.replace(Regex("\n\\s*\n"), SPACE_ELEMENT_LINE)
-
-    fun horizontalSpaceTag(quantity: Int): String =
-        "<space dim=\"horizontal\" unit=\"chars\" quantity=\"$quantity\"/>"
-
-    val regex = "(?:<nbsp/>)+".toRegex()
-
-    //    fun String.convertHorizontalSpace(): String =
-//        this.replace("<nbsp/>", " ")
-    fun String.convertHorizontalSpace(): String =
-        regex.replace(this) { matchResult ->
-            val count = matchResult.value.length / "<nbsp/>".length
-            horizontalSpaceTag(count)
-        }
-
-    private fun String.wrapSpaceElementWithNewLines(): String =
-        this.replace(
-            SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
-        )
-
-    const val ENCODED_PAGE_BREAK = """<hi rend="bold">¶</hi>"""
     private fun String.setParagraphs(divType: String, lang: String): String {
         val visitor = ParagraphVisitor(divType, lang)
         val xml = this.wrapInXml()
@@ -447,6 +433,45 @@ object TEIBuilder {
                 result.append("\n")
             }
         return result.toString().trim()
+    }
+
+    companion object {
+        const val SPACE_ELEMENT_LINE = "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n"
+        const val ENCODED_PAGE_BREAK = """<hi rend="bold">¶</hi>"""
+        val HI_TAGS: Map<String, String> = mapOf(
+            "strong" to "bold",
+            "center" to "center",
+            "b" to "bold",
+            "u" to "underline",
+            "em" to "italics",
+            "i" to "italics",
+            "sub" to "sub",
+            "sup" to "super"
+        )
+
+        fun horizontalSpaceTag(quantity: Int): String =
+            "<space dim=\"horizontal\" unit=\"chars\" quantity=\"$quantity\"/>"
+
+        val regex = "(?:<nbsp/>)+".toRegex()
+
+        //    fun String.convertHorizontalSpace(): String =
+        //        this.replace("<nbsp/>", " ")
+        fun String.convertHorizontalSpace(): String =
+            regex.replace(this) { matchResult ->
+                val count = matchResult.value.length / "<nbsp/>".length
+                horizontalSpaceTag(count)
+            }
+
+        private fun String.removeLineBreaks(): String =
+            this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
+
+        private fun String.convertVerticalSpace(): String =
+            this.replace(Regex("\n\\s*\n"), SPACE_ELEMENT_LINE)
+
+        private fun String.wrapSpaceElementWithNewLines(): String =
+            this.replace(
+                SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
+            )
     }
 
 }

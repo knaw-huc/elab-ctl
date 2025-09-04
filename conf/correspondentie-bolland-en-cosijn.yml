@@ -5,3 +5,4 @@ editor:
   url: https://viaf.org/viaf/291714142
 divRole: doc-sections
 pageBreakEncoding: PAGE_BREAK_MARKER
+annoNumToRefTarget: data/correspondentie-bolland-en-cosijn-annonum-to-ref-target.json

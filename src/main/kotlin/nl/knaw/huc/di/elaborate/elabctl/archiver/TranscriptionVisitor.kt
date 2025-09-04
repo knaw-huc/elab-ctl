@@ -13,19 +13,20 @@ import nl.knaw.huygens.tei.XmlContext
 import nl.knaw.huygens.tei.handlers.XmlTextHandler
 
 internal class TranscriptionVisitor(
-    annotationMap: Map<Long, AnnotationData>
+    annotationMap: Map<Long, AnnotationData>,
+    annoNumToRefTarget: Map<String, String>
 ) : DelegatingVisitor<XmlContext>(XmlContext()) {
 
     init {
         setTextHandler(XmlTextHandler())
         setCommentHandler(IgnoreCommentHandler())
         setDefaultElementHandler(DefaultElementHandler())
-        addElementHandler(SupHandler(annotationMap), "sup")
+        addElementHandler(SupHandler(annotationMap, annoNumToRefTarget), "sup")
         addElementHandler(BrHandler(), "br", "p")
         addElementHandler(LbHandler(), TAG_LB)
         addElementHandler(IgnoreHandler(NEXT), "content", "font", "div")
         addElementHandler(XmlHandler(), "xml")
-        addElementHandler(SpanHandler(), "span")
+        addElementHandler(SpanHandler(annoNumToRefTarget), "span")
         addElementHandler(DelHandler(), "strike")
 
         linenum = 1
@@ -87,9 +88,18 @@ internal class TranscriptionVisitor(
         }
     }
 
-    internal class SpanHandler : ElementHandler<XmlContext> {
+    internal class SpanHandler(val annoNumToRefTarget: Map<String, String>) : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
-//            val type: String = element.getAttribute("data-type")
+            if (element.hasAttribute("data-id")) {
+                val id: String = element.getAttribute("data-id")
+                annoNumToRefTarget[id]?.let { refTarget ->
+                    val refElement = Element("ref").withAttribute("target", refTarget)
+                    val sb = StringBuilder()
+                    refElement.appendOpenTagTo(sb)
+                    context.addComment(sb.toString())
+//                    context.addOpenTag(refElement)
+                }
+            }
             return NEXT
         }
 
@@ -196,15 +206,24 @@ internal class TranscriptionVisitor(
         }
     }
 
-    private class SupHandler(private val annotationMap: Map<Long, AnnotationData>) : ElementHandler<XmlContext> {
+    private class SupHandler(
+        private val annotationMap: Map<Long, AnnotationData>,
+        private val annoNumToRefTarget: Map<String, String>
+    ) : ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             if (element.hasAttribute("data-id")) {
                 val marker: String = element.getAttribute("data-marker")
                 val id: String = element.getAttribute("data-id")
                 if (marker == "end") {
 //                    addNoteElement(id, context)
-                    addPtrElement(id, context)
+                    if (id in annoNumToRefTarget) {
+                        context.addComment("</ref>")
+//                        context.addCloseTag("ref")
+                    } else {
+                        addPtrElement(id, context)
+                    }
                 }
+
                 return STOP
             } else {
                 val hi: Element = Element("hi").withAttribute("rend", TEIBuilder.HI_TAGS["sup"])

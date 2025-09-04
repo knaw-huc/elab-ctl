@@ -6,5 +6,12 @@ import nl.knaw.huygens.tei.Traversal
 import nl.knaw.huygens.tei.XmlContext
 
 class IgnoreCommentHandler : CommentHandler<XmlContext> {
-    override fun visitComment(p0: Comment?, p1: XmlContext?): Traversal = Traversal.NEXT
+    override fun visitComment(comment: Comment?, context: XmlContext?): Traversal = Traversal.NEXT
+}
+
+class KeepCommentHandler : CommentHandler<XmlContext> {
+    override fun visitComment(comment: Comment?, context: XmlContext?): Traversal {
+        context?.addLiteral(comment)
+        return Traversal.NEXT
+    }
 }

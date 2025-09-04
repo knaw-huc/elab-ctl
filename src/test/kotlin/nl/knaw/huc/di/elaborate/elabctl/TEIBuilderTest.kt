@@ -22,22 +22,37 @@ class TEIBuilderTest {
                 annotatedText = "",
                 n = 1,
                 text = "something",
-                type = AnnotationType(1, "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person", "description", mapOf("person_id" to "PE00011543"))
+                type = AnnotationType(
+                    1,
+                    "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person",
+                    "description",
+                    mapOf("person_id" to "PE00011543")
+                )
             ),
             9091281L to AnnotationData(
                 annotatedText = "",
                 n = 2,
                 text = "something",
-                type = AnnotationType(1, "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person", "description", mapOf("person_id" to "PE00011357"))
+                type = AnnotationType(
+                    1,
+                    "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person",
+                    "description",
+                    mapOf("person_id" to "PE00011357")
+                )
             ),
             9091282L to AnnotationData(
                 annotatedText = "",
                 n = 3,
                 text = "something",
-                type = AnnotationType(1, "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person", "description", mapOf("person_id" to "PE00011313"))
+                type = AnnotationType(
+                    1,
+                    "nl.knaw.huc.di.elaborate.elabctl.apparatus.Person",
+                    "description",
+                    mapOf("person_id" to "PE00011313")
+                )
             )
         )
-        val visitor = TranscriptionVisitor(annotationMap = annotationMap)
+        val visitor = TranscriptionVisitor(annotationMap = annotationMap, annoNumToRefTarget = mapOf())
         val prepared = text.replace("<br>", "<br/>\n")
         val wrapped = prepared.wrapInXml()
         val doc = Document.createFromXml(wrapped, false)

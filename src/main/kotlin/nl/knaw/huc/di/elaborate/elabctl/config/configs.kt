@@ -12,7 +12,8 @@ data class ElabCtlConfig(
     val projectName: String,
     val editor: EditorConfig,
     val divRole: String,
-    val pageBreakEncoding: PageBreakEncoding
+    val pageBreakEncoding: PageBreakEncoding,
+    val annoNumToRefTarget: String? = null
 )
 
 @Serializable

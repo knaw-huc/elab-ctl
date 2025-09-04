@@ -3,12 +3,12 @@ package nl.knaw.huc.di.elaborate.elabctl
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver
-import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.convertHorizontalSpace
-import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.horizontalSpaceTag
+import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.Companion.convertHorizontalSpace
+import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.Companion.horizontalSpaceTag
 
 class ArchiverTest {
 
-    //    @Test
+        @Test
     fun `test bolland-cosijn`() {
         Archiver.archive(listOf("./data/elab4-correspondentie-bolland-en-cosijn.war"))
     }
