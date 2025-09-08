@@ -6,3 +6,12 @@ editor:
 divRole: doc-sections
 pageBreakEncoding: PAGE_BREAK_MARKER
 annoNumToRefTarget: data/correspondentie-bolland-en-cosijn-annonum-to-ref-target.json
+letterDates:
+  earliestYear: 1879
+  latestYear: 1899
+letterMetadata:
+  sender: "Afzender"
+  senderPlace: "Plaats van schrijven"
+  recipient: "Ontvanger"
+  date: "Datum"
+  language: "Taal"

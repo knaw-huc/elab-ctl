@@ -6,6 +6,7 @@ SHADOW_JAR=build/libs/elabctl.jar
 NEWER_SOURCE_FILES=$(shell find src/main -newer $(SHADOW_JAR) -type f)
 BRICOR=brieven-correspondenten-1900
 BOLCOS=correspondentie-bolland-en-cosijn
+CLUSIUS=clusiuscorrespondence
 
 .PHONY: shadow-jar
 shadow-jar:
@@ -62,6 +63,20 @@ correspondentie-bolland-en-cosijn-rsync:
 browse-correspondentie-bolland-en-cosijn:
 	@open https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn
 
+# clusiuscorrespondence
+.PHONY: clusiuscorrespondence
+clusiuscorrespondence:
+	./bin/elabctl archive ./data/elab4-$(CLUSIUS).war
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(CLUSIUS)/schema/editem-letter.rng build/zip/elab4-$(CLUSIUS)/*/*.xml
+
+.PHONY: clusiuscorrespondence-rsync
+clusiuscorrespondence-rsync:
+	rsync -rav build/zip/elab4-$(CLUSIUS)/* ~/workspaces/editem/elaborate-export/$(CLUSIUS)/tei/
+	cd ~/workspaces/editem/elaborate-export/$(CLUSIUS) && (git commit -a -m "new elaborate export" && git push)
+
+.PHONY: browse-clusiuscorrespondence
+browse-clusiuscorrespondence:
+	@open https://gitlab.huc.knaw.nl/elaborate/clusiuscorrespondence
 
 .PHONY: help
 help:
@@ -81,4 +96,8 @@ help:
 	@echo "  $(BOLCOS)        - to run the tei export for $(BOLCOS)"
 	@echo "  $(BOLCOS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BOLCOS)"
 	@echo "  browse-$(BOLCOS) - to open the $(BOLCOS) gitlab repo in your browser"
+	@echo
+	@echo "  $(CLUSIUS)        - to run the tei export for $(CLUSIUS)"
+	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(CLUSIUS)"
+	@echo "  browse-$(CLUSIUS) - to open the $(CLUSIUS) gitlab repo in your browser"
 

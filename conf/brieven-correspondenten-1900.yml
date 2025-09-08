@@ -5,3 +5,12 @@ editor:
   url: https://viaf.org/en/viaf/94004977
 divRole: doc-sections
 pageBreakEncoding: PILCROW
+letterDates:
+  earliestYear: 1877
+  latestYear: 1925
+letterMetadata:
+  sender: "Afzender"
+  senderPlace: "Plaats"
+  recipient: "Ontvanger"
+  date: "Datum"
+  language: "Taal"

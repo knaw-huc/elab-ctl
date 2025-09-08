@@ -21,6 +21,8 @@ import nl.knaw.huygens.tei.Document
 class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtlConfig) {
     val annoNumToRefTarget: Map<String, String> by lazy { loadAnnoNumToRefTarget(conversionConfig.annoNumToRefTarget) }
 
+    val dateAttributeFactory = DateAttributeFactory(conversionConfig.letterDates)
+
     private fun loadAnnoNumToRefTarget(annoNumToRefTargetPath: String?): Map<String, String> {
         return if (annoNumToRefTargetPath == null) {
             mapOf()
@@ -115,13 +117,23 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 }
                 "profileDesc" {
                     "correspDesc" {
-                        sentCorrespActionNode(projectConfig, metadataMap)
+                        sentCorrespActionNode(projectConfig, metadataMap, conversionConfig)
 
-                        val receiveString = metadataMap["Ontvanger"] ?: ""
+                        val receiveString = metadataMap[conversionConfig.letterMetadata.recipient] ?: ""
                         val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
-                        correspActionNode(projectConfig, "received", firstReceivers)
+                        correspActionNode(
+                            projectConfig,
+                            "received",
+                            firstReceivers,
+                            metadataMap[conversionConfig.letterMetadata.recipientPlace]
+                        )
                         forwardReceivers?.let {
-                            correspActionNode(projectConfig, "received", forwardReceivers)
+                            correspActionNode(
+                                projectConfig,
+                                "received",
+                                forwardReceivers,
+                                metadataMap[conversionConfig.letterMetadata.recipientPlace]
+                            )
                         }
                     }
                 }
@@ -153,7 +165,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
-                            val lang = metadataMap["Taal"]?.asIsoLang() ?: "nl"
+                            val lang = (metadataMap["Taal"] ?: metadataMap["Language"])?.asIsoLang() ?: "nl"
                             val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
                             val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
                             annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
@@ -164,7 +176,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                                 .convertHorizontalSpace()
                                 .setParagraphs(divType, lang)
                                 .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
-                                .wrapLines(80)
+//                                .wrapLines(80)
                                 .wrapSpaceElementWithNewLines()
                                 .replace("\n\n\n", "\n\n")
                             "div" {
@@ -188,12 +200,13 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 "standOff" {
                     "listAnnotation" {
                         attribute("type", "notes")
-                        annotationMap.forEach { id, data ->
+                        annotationMap.forEach { (id, data) ->
+                            val noteText = data.text.ifEmpty { data.annotatedText }
                             "note" {
                                 attribute("xml:id", "note_$id")
                                 attribute("n", noteCounter.andIncrement)
-                                comment("${data.type.name} / ${data.type.description}")
-                                "p" { -data.text }
+                                comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
+                                "p" { -noteText }
                             }
                         }
                     }
@@ -205,7 +218,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     private fun Node.correspActionNode(
         projectConfig: ProjectConfig,
         type: String,
-        correspondentString: String
+        correspondentString: String,
+        recipientPlace: String?
     ) {
         val (personReceivers, orgReceivers) = correspondentString.biSplit("#")
         "correspAction" {
@@ -215,16 +229,23 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             orgReceivers?.let {
                 it.split("/").forEach { org -> orgRsNode(org) }
             }
+            recipientPlace?.let { place ->
+                "placeName" {
+                    -place
+                }
+            }
         }
     }
 
     private fun Node.sentCorrespActionNode(
         projectConfig: ProjectConfig,
-        metadataMap: Map<String, String>
+        metadataMap: Map<String, String>,
+        conversionConfig1: ElabCtlConfig
     ) {
-        val senders = (metadataMap["Afzender"] ?: "").split("/")
-        val date = metadataMap["Datum"] ?: ""
-        val place = metadataMap["Plaats"] ?: metadataMap["Plaats van schrijven"] ?: ""
+        val senders = (metadataMap[conversionConfig.letterMetadata.sender] ?: "").split("/")
+        val date = metadataMap[conversionConfig.letterMetadata.date] ?: ""
+        val place =
+            metadataMap[conversionConfig.letterMetadata.senderPlace] ?: ""
         "correspAction" {
             attribute("type", "sent")
             senders
@@ -234,7 +255,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                DateRegex.getDateAttributes(date).forEach {
+                dateAttributeFactory.getDateAttributes(date).forEach {
                     attribute(it.key, it.value)
                 }
                 -date
@@ -348,10 +369,14 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
     private fun String.asIsoLang() =
         when {
-            contains("Nederlands") -> "nl"
-            contains("Duits") -> "ge"
-            contains("Engels") -> "en"
-            contains("Frans") -> "fr"
+            contains("Nederlands") || contains("Dutch") -> "nl"
+            contains("Duits") || contains("German") -> "ge"
+            contains("Engels") || contains("English") -> "en"
+            contains("Frans") || contains("French") -> "fr"
+            contains("Italiaans") || contains("Italian") -> "it"
+            contains("Spaans") || contains("Spanish") -> "es"
+            contains("Latijns") || contains("Latin") -> "la"
+            contains("Unknown") || contains("Onbekend") -> "XX"
             else -> "nl"
         }
 
@@ -403,6 +428,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 }
                 str.addPageBreaks(divType, lang)
             }
+
+            PageBreakEncoding.NONE -> this
         }
 
     val pbRegex = Regex("\\[(\\d+)]")
@@ -470,6 +497,9 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
         private fun String.wrapSpaceElementWithNewLines(): String =
             this.replace(
+                "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/></p>",
+                "</p>\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>"
+            ).replace(
                 SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
             )
     }
