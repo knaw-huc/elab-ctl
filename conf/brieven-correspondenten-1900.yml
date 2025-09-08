@@ -14,3 +14,7 @@ letterMetadata:
   recipient: "Ontvanger"
   date: "Datum"
   language: "Taal"
+  idno: "Signatuur"
+  settlement: "Bewaarplaats"
+  institution: "Bewaarplaats"
+  collection: "Collectie"

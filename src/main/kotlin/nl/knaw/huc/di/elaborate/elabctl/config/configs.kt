@@ -39,5 +39,10 @@ data class LetterMetadataConfig(
     val recipient: String,
     val recipientPlace: String? = null,
     val date: String,
-    val language: String
+    val language: String,
+    val idno: String? = null,
+    val settlement: String? = null,
+    val institution: String? = null,
+    val collection: String? = null,
+
 )

@@ -101,11 +101,11 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                         "msDesc" {
                             "msIdentifier" {
                                 "country" {}
-                                "settlement" { metadataMap["Bewaarplaats"] ?: "" }
-                                "institution" { metadataMap["Bewaarplaats"] ?: "" }
+                                "settlement" { metadataMap[conversionConfig.letterMetadata.settlement] ?: "" }
+                                "institution" { metadataMap[conversionConfig.letterMetadata.institution] ?: "" }
 //                                "repository" { }
-//                                "collection" { -(metadataMap["Collectie"] ?: "") }
-                                "idno" { -(metadataMap["Signatuur"] ?: "") }
+                                "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") }
+                                "idno" { -(metadataMap[conversionConfig.letterMetadata.idno] ?: "") }
                             }
                             "physDesc" {
                                 "objectDesc" {
