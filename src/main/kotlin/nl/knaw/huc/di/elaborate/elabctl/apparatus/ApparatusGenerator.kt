@@ -196,11 +196,11 @@ class ApparatusGenerator {
     private fun asPerson(bioText: String): ApparatusPerson {
         val parts = bioText.split(", ", limit = 2)
         val firstPart = parts[0]
-        var forename = ""
-        var surname = ""
+        var forename: String
+        var surname: String
         var birth: String? = null
         var death: String? = null
-        var nameParts = mutableListOf("")
+        var nameParts: MutableList<String>
         if (firstPart.contains("(")) {
             val (namePart, years) = firstPart.split("(", ")")
             nameParts = namePart.trim().split(" ").toMutableList()

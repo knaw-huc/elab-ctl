@@ -117,19 +117,17 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 }
                 "profileDesc" {
                     "correspDesc" {
-                        sentCorrespActionNode(projectConfig, metadataMap, conversionConfig)
+                        sentCorrespActionNode(metadataMap)
 
                         val receiveString = metadataMap[conversionConfig.letterMetadata.recipient] ?: ""
                         val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
                         correspActionNode(
-                            projectConfig,
                             "received",
                             firstReceivers,
                             metadataMap[conversionConfig.letterMetadata.recipientPlace]
                         )
                         forwardReceivers?.let {
                             correspActionNode(
-                                projectConfig,
                                 "received",
                                 forwardReceivers,
                                 metadataMap[conversionConfig.letterMetadata.recipientPlace]
@@ -165,7 +163,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                         .filter { it.value.text.isNotEmpty() }
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
-                            val lang = (metadataMap["Taal"] ?: metadataMap["Language"])?.asIsoLang() ?: "nl"
+                            val lang = (metadataMap[conversionConfig.letterMetadata.language])?.asIsoLang() ?: "nl"
                             val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
                             val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
                             annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
@@ -216,7 +214,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     private fun Node.correspActionNode(
-        projectConfig: ProjectConfig,
         type: String,
         correspondentString: String,
         recipientPlace: String?
@@ -225,7 +222,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         "correspAction" {
             attribute("type", type)
             personReceivers.split("/")
-                .forEach { personRsNode(projectConfig, it) }
+                .forEach { personRsNode(it) }
             orgReceivers?.let {
                 it.split("/").forEach { org -> orgRsNode(org) }
             }
@@ -238,9 +235,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     private fun Node.sentCorrespActionNode(
-        projectConfig: ProjectConfig,
-        metadataMap: Map<String, String>,
-        conversionConfig1: ElabCtlConfig
+        metadataMap: Map<String, String>
     ) {
         val senders = (metadataMap[conversionConfig.letterMetadata.sender] ?: "").split("/")
         val date = metadataMap[conversionConfig.letterMetadata.date] ?: ""
@@ -251,7 +246,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             senders
                 .forEach { sender ->
                     val (person, org) = sender.biSplit("#")
-                    personRsNode(projectConfig, person)
+                    personRsNode(person)
                     org?.let { orgRsNode(org) }
                 }
             "date" {
@@ -267,7 +262,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     private fun Node.personRsNode(
-        projectConfig: ProjectConfig,
         personName: String
     ) {
         val personId = projectConfig.personIds[personName] ?: ""
