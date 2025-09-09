@@ -9,11 +9,12 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
     fun getDateAttributes(date: String): Map<String, String> {
         val firstYear = letterDateConfig.earliestYear
         val lastYear = letterDateConfig.latestYear
-        return when (DateRegex.detect(date.replace(" ", ""))) {
-            DateRegex.VALID_DATE, DateRegex.UNCERTAIN_DATE -> mapOf("when" to date)
+        val normalizedDate = date.replace(" ", "").replace("[", "").replace("]", "")
+        return when (DateRegex.detect(normalizedDate)) {
+            DateRegex.VALID_DATE, DateRegex.UNCERTAIN_DATE -> mapOf("when" to normalizedDate)
 
             DateRegex.UNCERTAIN_MONTH_DATE -> {
-                val year = date.take(4)
+                val year = normalizedDate.take(4)
                 mapOf(
                     "notBefore" to "$year-01-01",
                     "notAfter" to "$year-12-31"
@@ -21,8 +22,8 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.UNCERTAIN_DAY_DATE -> {
-                val year = date.take(4)
-                val month = date.substring(5, 7).toInt()
+                val year = normalizedDate.take(4)
+                val month = normalizedDate.substring(5, 7).toInt()
                 val ym = YearMonth.of(year.toInt(), month)
                 mapOf(
                     "notBefore" to "$year-${"%02d".format(month)}-01",
@@ -31,12 +32,12 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.DATE_RANGE -> {
-                val (notBefore, notAfter) = date.split("+", "_")
+                val (notBefore, notAfter) = normalizedDate.split("+", "_")
                 mapOf("notBefore" to notBefore, "notAfter" to notAfter)
             }
 
             DateRegex.DATE_RANGE_2 -> {
-                val (first, last) = date.split("+", "_")
+                val (first, last) = normalizedDate.split("+", "_")
                 val firstAttributes = getDateAttributes(first)
                 val lastAttributes = getDateAttributes(last)
                 val notBefore = firstAttributes["notBefore"] ?: firstAttributes["when"]!!
@@ -49,13 +50,13 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.DATE_RANGE_UNKNOWN_DAY_2 -> {
-                val (notBefore, notAfter) = date.split("+")
+                val (notBefore, notAfter) = normalizedDate.split("+")
                 val attributes = getDateAttributes(notAfter)
                 mapOf("notBefore" to notBefore, "notAfter" to attributes["notAfter"]!!)
             }
 
             DateRegex.DAY_RANGE -> {
-                val base = date.take(10) // yyyy-MM-dd
+                val base = normalizedDate.take(10) // yyyy-MM-dd
                 val extraDay = date.takeLast(2)
                 val notBefore = base
                 val notAfter = base.take(8) + extraDay
@@ -63,7 +64,7 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.YEAR_RANGE -> {
-                val (year1, rest) = date.split("_")
+                val (year1, rest) = normalizedDate.split("_")
                 val year2 = rest.take(4)
                 mapOf(
                     "notBefore" to "$year1-01-01",
@@ -72,9 +73,9 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.MONTH_RANGE -> {
-                val year = date.take(4).toInt()
-                val m1 = date.substring(5, 7).toInt()
-                val m2 = date.substring(8, 10).toInt()
+                val year = normalizedDate.take(4).toInt()
+                val m1 = normalizedDate.substring(5, 7).toInt()
+                val m2 = normalizedDate.substring(8, 10).toInt()
                 val ym2 = YearMonth.of(year, m2)
                 mapOf(
                     "notBefore" to "$year-${"%02d".format(m1)}-01",
@@ -83,8 +84,8 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.UNKNOWN_MONTH -> {
-                val year = date.take(4).toInt()
-                val day = date.takeLast(2).toInt()
+                val year = normalizedDate.take(4).toInt()
+                val day = normalizedDate.takeLast(2).toInt()
 
                 val firstMonth = YearMonth.of(year, 1)
                 val lastMonth = YearMonth.of(year, 12)
@@ -99,7 +100,7 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.PARTIALLY_UNKNOWN_YEAR -> {
-                val decade = date.take(3)
+                val decade = normalizedDate.take(3)
                 mapOf(
                     "notBefore" to "${decade}0-01-01",
                     "notAfter" to "${decade}9-12-31"
@@ -107,8 +108,8 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.UNKNOWN_YEAR -> {
-                val years = date.take(9)
-                val rest = date.substring(10)
+                val years = normalizedDate.take(9)
+                val rest = normalizedDate.substring(10)
                 val (y1, y2) = years.split("_")
                 val d1 = "$y1-$rest"
                 val d2 = "$y2-$rest"
@@ -123,7 +124,7 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
             }
 
             DateRegex.JUST_THE_MONTH -> {
-                val month = date.substring(5, 7)
+                val month = normalizedDate.substring(5, 7)
                 val ym2 = YearMonth.of(lastYear, month.toInt())
 
                 mapOf(

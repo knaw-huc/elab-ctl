@@ -37,7 +37,8 @@ object Archiver {
             )
             val conversionConfig = loadConfig(projectConfig.projectName)
             val teiBuilder = TEIBuilder(projectConfig, conversionConfig)
-            File("build/zip/$projectName").deleteRecursively()
+            File("build/zip/$projectName/letters").deleteRecursively()
+            File("build/zip/$projectName/about").deleteRecursively()
             File("build/zip/$projectName/letters").mkdirs()
             File("build/zip/$projectName/about").mkdirs()
             File("out").mkdirs()
@@ -48,6 +49,7 @@ object Archiver {
                 "mkdir -p /data/tmp/facsimiles",
                 "cd /data/webapps/jp2"
             )
+            val report = ConversionReporter(projectConfig.projectName, conversionConfig)
             ZipFile(warPath).use { zip ->
                 val elabConfigEntry = zip.getEntry("data/config.json")
                 val elabConfig: EditionConfig = zip.getInputStream(elabConfigEntry).use { input ->
@@ -65,6 +67,7 @@ object Archiver {
                         val teiName =
                             teiName(entryTypeName, i + 1, entryDescription.shortName)
                         val entry = loadEntry(zip, entryDescription)
+                        report.addEntry(entry, teiName)
 
                         processFacsimiles(teiName, entry.facsimiles, scriptLines)
                         facsimilePaths.addAll(entry.facsimiles.map {
@@ -85,6 +88,7 @@ object Archiver {
                         logger.info { "" }
                     }
             }
+            report.storeAsCsv()
             errors.addAll(convertWordPressExport(projectName, conversionConfig))
             createZip(projectName)
             storeFacsimilePaths(facsimilePaths)

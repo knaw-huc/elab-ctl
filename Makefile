@@ -33,6 +33,11 @@ drafts-list:
 editions-list:
 	./scripts/e4-list.sh editions
 
+.PHONY: all-archives
+all-archives:
+	./bin/elabctl archive ./data/elab4-$(BRICOR).war ./data/elab4-$(BOLCOS).war ./data/elab4-$(CLUSIUS).war
+	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/*/*.xml
+
 # brieven-correspondenten-1900
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
@@ -88,6 +93,8 @@ help:
 	@echo "  archive       - to run the archiver"
 	@echo "  drafts-list   - to list the available drafts"
 	@echo "  editions-list - to list the available editions"
+	@echo
+	@echo "  all-archives - run the tei export for all elaborate projects"
 	@echo
 	@echo "  $(BRICOR)        - to run the tei export for $(BRICOR)"
 	@echo "  $(BRICOR)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BRICOR)"
