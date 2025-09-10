@@ -51,6 +51,9 @@ dependencies {
     implementation("org.jsoup:jsoup:1.17.2")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
     implementation("org.apache.commons:commons-csv:1.14.1")
+    implementation("org.docx4j:docx4j:6.1.2")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")    // temporal dependencies
+
     runtimeOnly("com.github.jai-imageio:jai-imageio-jpeg2000:1.4.0") // jpeg2000 handling in imageio
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
