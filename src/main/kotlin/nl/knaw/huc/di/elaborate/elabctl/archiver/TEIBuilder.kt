@@ -104,7 +104,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                                 "settlement" { metadataMap[conversionConfig.letterMetadata.settlement] ?: "" }
                                 "institution" { metadataMap[conversionConfig.letterMetadata.institution] ?: "" }
 //                                "repository" { }
-                                "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") }
+//                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
                                 "idno" { -(metadataMap[conversionConfig.letterMetadata.idno] ?: "") }
                             }
                             "physDesc" {

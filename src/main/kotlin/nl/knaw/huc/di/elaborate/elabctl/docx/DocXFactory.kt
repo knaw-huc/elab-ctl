@@ -3,7 +3,6 @@ package nl.knaw.huc.di.elaborate.elabctl.docx
 import java.io.File
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage
 import org.docx4j.openpackaging.parts.WordprocessingML.EndnotesPart
-import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart
 
 object DocXFactory {
     fun generate() {
