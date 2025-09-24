@@ -192,7 +192,7 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             doc1.accept(elementInventoryVisitor)
 
             val visitor = WordPressExportItemContentVisitor()
-            val doc2 = createFromXml(wrapped, false)
+            val doc2 = createFromXml(wrapped.replace("<tbody>\n", "").replace("</tbody>\n", ""), false)
             doc2.accept(visitor)
             val result = visitor.context.result
             val fixed = result.unwrapFromXml()
@@ -202,7 +202,12 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
 
             val withEmptyHiRemoved = emptyHiExp.replace(fixed) { "" }
 
-            "\n\n$withEmptyHiRemoved\n\n"
+            if (!withEmptyHiRemoved.contains("</p>")) {
+                "\n\n<p>${withEmptyHiRemoved.replace("\n\n", "</p>\n\n<p>")}</p>\n\n"
+            } else {
+                "\n\n$withEmptyHiRemoved\n\n"
+            }
+
         } else {
             logger.error { "HTML not well-formed" }
             "\n\n<!-- NOT WELL-FORMED! -->\n$tei\n\n"
