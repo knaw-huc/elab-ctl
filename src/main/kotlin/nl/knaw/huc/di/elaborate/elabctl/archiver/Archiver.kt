@@ -65,7 +65,7 @@ object Archiver {
                         logger.info { "entry ${i + 1} / $total..." }
                         logger.info { entryDescription }
                         val teiName =
-                            teiName(entryTypeName, i + 1, entryDescription.name)
+                            teiName(entryTypeName, i + 1, entryDescription.shortName)
                         val entry = loadEntry(zip, entryDescription)
                         report.addEntry(entry, teiName)
 

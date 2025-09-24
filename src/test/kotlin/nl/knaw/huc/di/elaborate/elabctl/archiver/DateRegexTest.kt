@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import nl.knaw.huc.di.elaborate.elabctl.config.LetterDateConfig
 
 class DateRegexTest {
 
@@ -103,7 +104,7 @@ class DateRegexTest {
     )
 
     fun `test getDateAttributes`(input: String, expectedNotBefore: String, expectedNotAfter: String) {
-        val result = DateRegex.getDateAttributes(input)
+        val result = DateAttributeFactory(LetterDateConfig(1900, 2000)).getDateAttributes(input)
         assertEquals(expectedNotBefore, result["notBefore"], "wrong notBefore for $input")
         assertEquals(expectedNotAfter, result["notAfter"], "wrong notAfter for $input")
     }

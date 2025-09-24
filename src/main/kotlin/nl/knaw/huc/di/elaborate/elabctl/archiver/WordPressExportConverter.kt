@@ -72,7 +72,7 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                     val postName = itemNode.postName()
                     val lastModified = itemNode.getString("./wp:post_modified/text()")
 //                    logNode(title, lastModified, link, postName, creator, content)
-                    val xmlSrc = buildXML(content, link, creator, title, lastModified)
+                    val xmlSrc = buildXML(content, link, creator, title, lastModified, postName)
                     val outPath = "$outputDir/$postName.xml"
                     logger.info { "=> $outPath" }
                     Path(outPath).writeText(xmlSrc)
@@ -93,7 +93,14 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
         useSelfClosingTags = true
     )
 
-    private fun buildXML(content: String, link: String, creator: String, title: String, lastModified: String): String =
+    private fun buildXML(
+        content: String,
+        link: String,
+        creator: String,
+        title: String,
+        lastModified: String,
+        postName: String
+    ): String =
         xml("TEI") {
             globalProcessingInstruction("editem", Pair("template", "about"))
             globalProcessingInstruction(
@@ -149,7 +156,11 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
 
             "text" {
                 "body" {
-                    unsafeText(asTEI(content))
+                    "head" { -title }
+                    "div" {
+                        attribute("xml:id", postName)
+                        unsafeText(asTEI(content))
+                    }
                 }
             }
         }.toString(printOptions = printOptions)
