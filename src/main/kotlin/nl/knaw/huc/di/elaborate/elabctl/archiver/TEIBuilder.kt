@@ -161,10 +161,14 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     attribute("divRole", conversionConfig.divRole)
                     entry.parallelTexts
                         .filter { it.value.text.isNotEmpty() }
+                        .toSortedMap()
 //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                         .forEach { (layerName, textLayer) ->
-                            val lang = (metadataMap[conversionConfig.letterMetadata.language])?.asIsoLang() ?: "nl"
-                            val divType = projectConfig.divTypeForLayerName[layerName] ?: "original"
+                            val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
+                            val lang = when {
+                                (divType == "translation") -> "nl"
+                                else -> (metadataMap[conversionConfig.letterMetadata.language])?.asIsoLang() ?: "nl"
+                            }
                             val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
                             annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
                             val text = textLayer.text

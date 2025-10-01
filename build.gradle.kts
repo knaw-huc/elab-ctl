@@ -39,20 +39,21 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.github.spullara.mustache.java:compiler:0.9.10")
     implementation("com.google.code.gson:gson:2.10")
+    implementation("commons-validator:commons-validator:1.6")
     implementation("info.freelibrary:jiiify-presentation-v3:0.12.4") // iiif v3
     implementation("io.arrow-kt:arrow-core:2.0.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:2.0.1")
     implementation("io.ktor:ktor-client-cio:${ktorVersion}")
     implementation("io.ktor:ktor-client-core:${ktorVersion}")
     implementation("nl.knaw.huygens:visitei:0.6.2")
+    implementation("org.apache.commons:commons-csv:1.14.1")
     implementation("org.apache.logging.log4j:log4j-api-kotlin:1.4.0")
     implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+    implementation("org.docx4j:docx4j:6.1.2")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")    // temporal dependencies
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // 1.7.0 leads to compile error
     implementation("org.jsoup:jsoup:1.17.2")
     implementation("org.redundent:kotlin-xml-builder:1.9.1")
-    implementation("org.apache.commons:commons-csv:1.14.1")
-    implementation("org.docx4j:docx4j:6.1.2")
-    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")    // temporal dependencies
 
     runtimeOnly("com.github.jai-imageio:jai-imageio-jpeg2000:1.4.0") // jpeg2000 handling in imageio
     testImplementation(kotlin("test"))

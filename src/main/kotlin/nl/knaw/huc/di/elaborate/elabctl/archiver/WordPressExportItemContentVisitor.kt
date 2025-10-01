@@ -20,18 +20,20 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
         addElementHandler(BrHandler(), "br")
         addElementHandler(ElementReplaceHandler(Element("item")), "li")
         addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "numbered")), "ol")
-        addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "bullet")), "ul")
+        addElementHandler(ElementReplaceHandler(Element("list").withAttribute("type", "bulleted")), "ul")
         addElementHandler(ElementReplaceHandler(Element("cell")), "td")
         addElementHandler(ElementReplaceHandler(Element("row")), "tr")
         addElementHandler(AsCommentHandler(), "button", "iframe", "wpcaption", "span")
         addElementHandler(AnnotationBodyConverter.IgnoreElementHandler(), "tbody")
         addElementHandler(RemoveAttributesHandler(), "p", "table")
+        addElementHandler(TranscriptionVisitor.IgnoreHandler(NEXT), "center")
         addElementHandler(AsHeadHandler("level1"), "h1")
         addElementHandler(AsHeadHandler("level2"), "h2")
         addElementHandler(AsHeadHandler("level3"), "h3")
         addElementHandler(AsHeadHandler("level4"), "h4")
 //        addElementHandler(WPCaptionHandler(), "wpcaption")
         addElementHandler(ImgHandler(), "img")
+        addElementHandler(AnnotationBodyConverter.IgnoreElementHandler(), "div")
     }
 
     internal class BrHandler() : ElementHandler<XmlContext> {
@@ -88,8 +90,15 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
                 addCloseTag("head")
                 val graphic = Element("graphic")
                     .withAttribute("url", element.getAttribute("src"))
-                    .withAttribute("width", element.getAttribute("width"))
-                    .withAttribute("height", element.getAttribute("height"))
+                    .apply {
+                        if (element.hasAttribute("width")) {
+                            setAttribute("width", element.getAttribute("width") + "px")
+                        }
+                        if (element.hasAttribute("height")) {
+                            setAttribute("height", element.getAttribute("height") + "px")
+                        }
+                    }
+
                 addEmptyElementTag(graphic)
             }
 
@@ -106,21 +115,35 @@ internal class WordPressExportItemContentVisitor() : DelegatingVisitor<XmlContex
     }
 
     internal class RefHandler() : ElementHandler<XmlContext> {
+        val STARTS_WITH_DIGIT_REGEX = Regex("^\\d.*")
         var closeElement = true
         var closingElement = ""
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             if (element.hasAttribute("href")) {
-                val newElement = if (element.getAttribute("href").contains("#_ftn")) {
-                    Element("ptr").withAttribute("target", element.getAttribute("href"))
+                if (element.getAttribute("href").contains("#_ftn")) {
+                    val newElement = Element("ptr").withAttribute(
+                        "target",
+                        element.getAttribute("href").replace(" ", "").lowercase()
+                    )
+                    context.addEmptyElementTag(newElement)
+                    closeElement = false
                 } else {
-                    Element("ref").withAttribute("target", element.getAttribute("href"))
+                    val newElement = Element("ref").withAttribute(
+                        "target",
+                        element.getAttribute("href").replace(" ", "").lowercase()
+                    )
+                    context.addOpenTag(newElement)
+                    closeElement = true
+                    closingElement = newElement.name
                 }
-                context.addOpenTag(newElement)
-                closeElement = true
-                closingElement = newElement.name
 
             } else {
-                val newElement = Element("anchor").withAttribute("xml:id", element.getAttribute("name"))
+                val name = element.getAttribute("name")
+                val xmlId = when {
+                    STARTS_WITH_DIGIT_REGEX.matchEntire(name) != null -> "a$name"
+                    else -> name
+                }
+                val newElement = Element("anchor").withAttribute("xml:id", xmlId)
                 context.addEmptyElementTag(newElement)
                 closeElement = false
 

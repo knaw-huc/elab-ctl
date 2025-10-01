@@ -140,7 +140,7 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                             }
                         }
                         "date" {
-                            attribute("when", lastModified)
+                            attribute("when", lastModified.substringBefore(" "))
                             -lastModified
                         }
                         "ptr" {
@@ -177,6 +177,8 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             .replace("&nbsp;", " ")
             .replace("<br>", "<br/>")
             .replace("</h2>\n<h2>", "")
+            .replace("<td><tr>","<tr><td>")
+            .replace("</tr></trd","</td></tr>")
             .trim()
         val wpCaptionReplaced =
             wpCaptionRegexp.replace(cleaned) { "<wpcaption ${it.groups[1]?.value}>" }
@@ -198,15 +200,16 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             val fixed = result.unwrapFromXml()
                 .replace("\u00A0", " ")
                 .replace(" </hi>", "</hi> ")
-                .replace("</p>", "</p>\n")
+                .replace("<p>", "")
+                .replace("</p>", "")
 
             val withEmptyHiRemoved = emptyHiExp.replace(fixed) { "" }
 
-            if (!withEmptyHiRemoved.contains("</p>")) {
-                "\n\n<p>${withEmptyHiRemoved.replace("\n\n", "</p>\n\n<p>")}</p>\n\n"
-            } else {
-                "\n\n$withEmptyHiRemoved\n\n"
-            }
+//            if (!withEmptyHiRemoved.contains("</p>")) {
+            "\n\n<p>${withEmptyHiRemoved.replace("\n\n", "</p>\n\n<p>")}</p>\n\n"
+//            } else {
+//                "\n\n$withEmptyHiRemoved\n\n"
+//            }
 
         } else {
             logger.error { "HTML not well-formed" }

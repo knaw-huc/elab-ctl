@@ -24,7 +24,7 @@ internal class TranscriptionVisitor(
         addElementHandler(SupHandler(annotationMap, annoNumToRefTarget), "sup")
         addElementHandler(BrHandler(), "br", "p")
         addElementHandler(LbHandler(), TAG_LB)
-        addElementHandler(IgnoreHandler(NEXT), "content", "font", "div")
+        addElementHandler(IgnoreHandler(NEXT), "content", "font", "div", "center")
         addElementHandler(XmlHandler(), "xml")
         addElementHandler(SpanHandler(annoNumToRefTarget), "span")
         addElementHandler(DelHandler(), "strike")

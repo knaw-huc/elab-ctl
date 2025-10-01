@@ -33,7 +33,7 @@ object Archiver {
             val projectConfig = ProjectConfig(
                 projectName = projectName.replace("elab4-", ""),
                 personIds = loadPersonIdMap(projectName),
-                divTypeForLayerName = mapOf("Transcription" to "original")
+                divTypeForLayerName = mapOf("Transcription" to "original", "Translation" to "translation")
             )
             val conversionConfig = loadConfig(projectConfig.projectName)
             val teiBuilder = TEIBuilder(projectConfig, conversionConfig)

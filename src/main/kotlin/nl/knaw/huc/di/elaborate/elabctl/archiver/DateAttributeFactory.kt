@@ -1,6 +1,7 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.YearMonth
+import org.apache.commons.validator.GenericValidator
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.config.LetterDateConfig
 
@@ -11,7 +12,16 @@ class DateAttributeFactory(val letterDateConfig: LetterDateConfig) {
         val lastYear = letterDateConfig.latestYear
         val normalizedDate = date.replace(" ", "").replace("[", "").replace("]", "")
         return when (DateRegex.detect(normalizedDate)) {
-            DateRegex.VALID_DATE, DateRegex.UNCERTAIN_DATE -> mapOf("when" to normalizedDate)
+            DateRegex.VALID_DATE, DateRegex.UNCERTAIN_DATE -> if (GenericValidator.isDate(
+                    normalizedDate,
+                    "yyyy-MM-dd",
+                    true
+                )
+            ) {
+                mapOf("when" to normalizedDate)
+            } else {
+                mapOf()
+            }
 
             DateRegex.UNCERTAIN_MONTH_DATE -> {
                 val year = normalizedDate.take(4)
