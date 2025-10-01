@@ -131,7 +131,7 @@ object App {
             personXmlNodes.add(
                 xml("person") {
                     attribute("xml:id", xmlId)
-                    attribute("sex", person.sex())
+                    attribute("gender", person.sex())
                     person.source()?.let { attribute("source", it) }
                     person.names.forEach { name ->
                         val forename = name.nameComponent("FORENAME")
@@ -143,7 +143,7 @@ object App {
                             forename?.let { "forename" { -it } }
                             nameLink?.let { "nameLink" { -it } }
                             surname?.let { "surname" { -it } }
-                            genName?.let { "addname" { -it } }
+                            genName?.let { "addName" { -it } }
                         }
                     }
                     person.birthDate?.let {
@@ -156,11 +156,13 @@ object App {
                         attribute("type", "shortdesc")
                         -person.shortDescription
                     }
-                    "note" {
-                        attribute("type", "longdesc")
-//                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
-                        unsafeText(person.notities.replace("</p> ", "</p>\n"))
-                    }
+//                    if (person.notities.isNotEmpty()) {
+//                        "note" {
+//                            attribute("type", "biographic")
+////                    unsafeText(person.aantekeningen.replace("</p> ", "</p>\n"))
+//                            unsafeText(person.notities.replace("</p> ", "</p>\n"))
+//                        }
+//                    }
                 })
         }
 
@@ -247,8 +249,8 @@ object App {
 
     private fun Person.source(): String? {
         val source = listOf(dbnlUrl, biodesurl).filter { it.isNotEmpty() }.joinToString(" ")
-        return when (source) {
-            " " -> null
+        return when {
+            source.isEmpty() -> null
             else -> source
         }
     }
