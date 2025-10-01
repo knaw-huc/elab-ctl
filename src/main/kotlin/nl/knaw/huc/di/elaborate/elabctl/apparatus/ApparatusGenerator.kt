@@ -10,7 +10,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.apache.commons.validator.GenericValidator
 import org.apache.logging.log4j.kotlin.logger
+import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
@@ -254,10 +256,10 @@ class ApparatusGenerator {
                     "surname" { -person.surname }
                 }
                 person.birth?.let {
-                    "birth" { attribute("when", it) }
+                    "birth" { whenNode(it) }
                 }
                 person.death?.let {
-                    "death" { attribute("when", it) }
+                    "death" { whenNode(it) }
                 }
                 person.note?.let {
                     "note" {
@@ -322,6 +324,13 @@ class ApparatusGenerator {
 
         }.toString(printOptions = printOptions)
     }
+
+    private fun Node.whenNode(date: String) =
+        if (GenericValidator.isDate(date, "yyyy-MM-dd", true)) {
+            attribute("when", date)
+        } else {
+            comment("Invalid date: $date")
+        }
 
     private fun AnnotationData.normalizeAnnotationText(): String {
         val normalized = text.replace("<br/>", "")
