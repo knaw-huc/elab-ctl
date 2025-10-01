@@ -7,6 +7,7 @@ NEWER_SOURCE_FILES=$(shell find src/main -newer $(SHADOW_JAR) -type f)
 BRICOR=brieven-correspondenten-1900
 BOLCOS=correspondentie-bolland-en-cosijn
 CLUSIUS=clusiuscorrespondence
+OGIER=ogier
 
 .PHONY: shadow-jar
 shadow-jar:
@@ -42,7 +43,10 @@ all-archives:
 .PHONY: brieven-correspondenten-1900
 brieven-correspondenten-1900:
 	./bin/elabctl archive ./data/elab4-$(BRICOR).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/*/*.xml
+	echo "validating tei export..."
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-about.rng build/zip/elab4-$(BRICOR)/about/*.xml > out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/letters/*.xml >> out/xml-validate.log
+	less out/xml-validate.log
 
 .PHONY: brieven-correspondenten-1900-rsync
 brieven-correspondenten-1900-rsync:
@@ -57,7 +61,10 @@ browse-brieven-correspondenten-1900:
 .PHONY: correspondentie-bolland-en-cosijn
 correspondentie-bolland-en-cosijn:
 	./bin/elabctl archive ./data/elab4-$(BOLCOS).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-letter.rng build/zip/elab4-$(BOLCOS)/*/*.xml
+	echo "validating tei export..."
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-about.rng build/zip/elab4-$(BOLCOS)/about/*.xml > out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(BOLCOS)/schema/editem-letter.rng build/zip/elab4-$(BOLCOS)/letters/*.xml >> out/xml-validate.log
+	less out/xml-validate.log
 
 .PHONY: correspondentie-bolland-en-cosijn-rsync
 correspondentie-bolland-en-cosijn-rsync:
@@ -72,7 +79,10 @@ browse-correspondentie-bolland-en-cosijn:
 .PHONY: clusiuscorrespondence
 clusiuscorrespondence:
 	./bin/elabctl archive ./data/elab4-$(CLUSIUS).war
-	#xmllint --valid --noout --relaxng ~/workspaces/editem/elaborate-export/$(CLUSIUS)/schema/editem-letter.rng build/zip/elab4-$(CLUSIUS)/*/*.xml
+	echo "validating tei export..."
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(CLUSIUS)/schema/editem-about.rng build/zip/elab4-$(CLUSIUS)/about/*.xml > out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(CLUSIUS)/schema/editem-letter.rng build/zip/elab4-$(CLUSIUS)/letters/*.xml >> out/xml-validate.log
+	less out/xml-validate.log
 
 .PHONY: clusiuscorrespondence-rsync
 clusiuscorrespondence-rsync:
@@ -107,4 +117,7 @@ help:
 	@echo "  $(CLUSIUS)        - to run the tei export for $(CLUSIUS)"
 	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(CLUSIUS)"
 	@echo "  browse-$(CLUSIUS) - to open the $(CLUSIUS) gitlab repo in your browser"
-
+	@echo
+	@echo "  $(CLUSIUS)        - to run the tei export for $(CLUSIUS)"
+	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(CLUSIUS)"
+	@echo "  browse-$(CLUSIUS) - to open the $(CLUSIUS) gitlab repo in your browser"
