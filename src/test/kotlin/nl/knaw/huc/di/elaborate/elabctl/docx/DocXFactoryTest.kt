@@ -17,10 +17,10 @@ class DocXFactoryTest {
     fun `validate dates`() {
         val incorrectDate = "1887-11-31"
         val correctDate = "1887-11-30"
-        assertTrue(GenericValidator.isDate("2019-02-28", "yyyy-MM-dd", true));
-        assertFalse(GenericValidator.isDate("2019-02-29", "yyyy-MM-dd", true));
-        assertTrue(GenericValidator.isDate(correctDate, "yyyy-MM-dd", true));
-        assertFalse(GenericValidator.isDate(incorrectDate, "yyyy-MM-dd", true));
+        assertTrue(GenericValidator.isDate("2019-02-28", "yyyy-MM-dd", true))
+        assertFalse(GenericValidator.isDate("2019-02-29", "yyyy-MM-dd", true))
+        assertTrue(GenericValidator.isDate(correctDate, "yyyy-MM-dd", true))
+        assertFalse(GenericValidator.isDate(incorrectDate, "yyyy-MM-dd", true))
     }
 
 }
