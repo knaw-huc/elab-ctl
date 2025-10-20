@@ -43,13 +43,18 @@ fun archive(args: List<String>) {
 
 fun generateManifests(args: List<String>) {
     logger.debug { "args=${args}" }
-    if (args.size == 2) {
+    if (args.size >= 2) {
         val zipPath = args[0]
         val projectName = args[1]
-        ManifestGenerator.generateFrom(zipPath, projectName)
+        val mode = when {
+            args.size == 3 && (args[2] == "--single" || args[2] == "-s") -> ManifestGenerator.Mode.PROJECT
+            else -> ManifestGenerator.Mode.ENTRY
+        }
+        ManifestGenerator.generateFrom(zipPath, projectName, mode)
     } else {
-        println("missing argument(s): zip-path - path to the facsimiles.zip")
+        println("missing argument(s): zip-path     - path to the facsimiles.zip")
         println("                     project-name - the project name")
+        println("                     [--single | -s]   - generate a single manifest for the whole project (otherwise, one per entry)")
     }
 }
 
