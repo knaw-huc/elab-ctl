@@ -1,10 +1,12 @@
 projectName: brieven-correspondenten-1900
+title: "Clusius Correspondence"
+type: letters
 editor:
   name: Esther van Gelder
   id: evg
   url: https://viaf.org/viaf/239379088
 divRole: original-translation
-pageBreakEncoding: NONE
+pageBreakEncoding: none
 letterDates:
   earliestYear: 1548
   latestYear: 1609

@@ -1,10 +1,12 @@
 projectName: brieven-correspondenten-1900
+title: "Brieven en Correspondenten 1900"
+type: letters
 editor:
   name: Annemarie Kets-Vree
   id: ak
   url: https://viaf.org/en/viaf/94004977
 divRole: doc-sections
-pageBreakEncoding: PILCROW
+pageBreakEncoding: pilcrow
 letterDates:
   earliestYear: 1877
   latestYear: 1925

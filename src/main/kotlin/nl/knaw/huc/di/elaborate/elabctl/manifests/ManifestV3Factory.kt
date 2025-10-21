@@ -11,51 +11,60 @@ import info.freelibrary.iiif.presentation.v3.properties.Metadata
 import info.freelibrary.iiif.presentation.v3.properties.Value
 import info.freelibrary.iiif.presentation.v3.properties.behaviors.ManifestBehavior
 import info.freelibrary.iiif.presentation.v3.services.ImageService3
+import org.apache.logging.log4j.kotlin.logger
+import nl.knaw.huc.di.elaborate.elabctl.archiver.EditionConfig
+import nl.knaw.huc.di.elaborate.elabctl.archiver.EntryDescription
 import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
 
 class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
 
     fun forEntry(
         entryName: String,
-        facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>
+        facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>,
+        config: EditionConfig
     ): Manifest {
         val manifestId = "$manifestBaseUrl/$entryName-manifest.json"
         val metadata = listOf(
             Metadata(Label("en", "EntryName"), Value(I18n("en", entryName)))
         )
-        return Manifest(manifestId, Label("en", "Pages"))
+        return Manifest(manifestId, Label("en", entryName))
             .setRights("http://creativecommons.org/licenses/by/4.0/")
             .setBehaviors(ManifestBehavior.PAGED)
             .setMetadata(metadata)
-            .setCanvases(toCanvases(facsimileDimensions, manifestId))
+            .setCanvases(toCanvases(facsimileDimensions, manifestId, config.entries))
     }
 
     fun forProject(
         projectName: String,
+        config: EditionConfig,
         groups: Map<String, List<FacsimileDimensionsFactory.FacsimileDimensions>>
     ): Manifest {
         val manifestId = "$manifestBaseUrl/$projectName-manifest.json"
+        val projectTitle = config.title
         val facsimileDimensions = groups.values.flatten()
         val metadata = listOf(
-            Metadata(Label("en", "Name"), Value(I18n("en", projectName)))
+            Metadata(Label("en", "Name"), Value(I18n("en", projectTitle)))
         )
-        return Manifest(manifestId, Label("en", "Pages"))
+        return Manifest(manifestId, Label("en", projectTitle))
             .setRights("http://creativecommons.org/licenses/by/4.0/")
             .setBehaviors(ManifestBehavior.PAGED)
             .setMetadata(metadata)
-            .setCanvases(toCanvases(facsimileDimensions, manifestId))
+            .setCanvases(toCanvases(facsimileDimensions, manifestId, config.entries))
     }
 
     private fun toCanvases(
         facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>,
-        manifestId: String
+        manifestId: String,
+        entriesMetadata: ArrayList<EntryDescription>
     ): List<Canvas> =
         facsimileDimensions
             .sortedBy { it.fileName }
             .mapIndexed { i, facsimileDimensions ->
-                val imageBaseName = facsimileDimensions.fileName.substringBeforeLast(".")
+                val entryMetadata = entriesMetadata[i]
+                logger.info { entryMetadata.name }
+//                val imageBaseName = facsimileDimensions.fileName.substringBeforeLast(".")
                 val canvas =
-                    Canvas("$manifestId#canvas-$i", Label("en", imageBaseName))
+                    Canvas("$manifestId#canvas-$i", Label("en", entryMetadata.name))
                         .setWidthHeight(facsimileDimensions.width, facsimileDimensions.height)
                 val page = AnnotationPage<PaintingAnnotation>("$manifestId#page-$i")
                 val imageUrl = "${iiifBaseUrl}${facsimileDimensions.fileName}"

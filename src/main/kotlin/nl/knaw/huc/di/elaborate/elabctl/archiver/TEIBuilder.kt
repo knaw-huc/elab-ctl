@@ -13,6 +13,7 @@ import org.redundent.kotlin.xml.XmlVersion
 import org.redundent.kotlin.xml.xml
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.json
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
+import nl.knaw.huc.di.elaborate.elabctl.config.LetterMetadataConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.PageBreakEncoding
 import nl.knaw.huc.di.elaborate.elabctl.logger
 import nl.knaw.huygens.tei.Document
@@ -21,7 +22,164 @@ import nl.knaw.huygens.tei.Document
 class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtlConfig) {
     val annoNumToRefTarget: Map<String, String> by lazy { loadAnnoNumToRefTarget(conversionConfig.annoNumToRefTarget) }
 
-    val dateAttributeFactory = DateAttributeFactory(conversionConfig.letterDates)
+    val dateAttributeFactory = conversionConfig.letterDates?.let { DateAttributeFactory(it) }
+
+    val printOptions = PrintOptions(
+        singleLineTextElements = true,
+        indent = "  ",
+        useSelfClosingTags = true
+    )
+
+    fun entryToTEI(
+        entry: Entry,
+        teiName: String
+    ): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val currentDate = LocalDateTime.now().format(formatter)
+        val metadataMap = entry.metadata.associate { it.field to it.value }
+        val projectName = projectConfig.projectName
+        val title = entry.name
+        val editorName = conversionConfig.editor.name
+        val editorId = conversionConfig.editor.id
+        val editorUrl = conversionConfig.editor.url
+
+        val letterMetadata = conversionConfig.letterMetadata!!
+        return xml("TEI") {
+            prologNodes("letter")
+            xmlns = "http://www.tei-c.org/ns/1.0"
+//            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
+            teiHeaderNode(
+                entry,
+                title,
+                editorId,
+                editorName,
+                editorUrl,
+                currentDate,
+                projectName,
+                metadataMap,
+                letterMetadata
+            )
+            facsimileNode(listOf(entry), teiName)
+            metadataCommentNodes(entry)
+            val annotationMap: MutableMap<Long, AnnotationData> = textNode(entry, metadataMap, letterMetadata)
+            standOffNode(annotationMap)
+        }.toString(printOptions = printOptions)
+    }
+
+    fun manuscriptToTEI(entries: List<Entry>, projectName: String): String {
+        val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Hoofdstuknummer"]!! }
+        return xml("TEI") {
+            prologNodes("medieval-manuscript")
+            xmlns = "http://www.tei-c.org/ns/1.0"
+            "teiHeader" {
+//                "fileDesc" {
+//                    "titleStmt" {
+//                        "title" {
+//                            comment(entry.name)
+//                            -title
+//                        }
+//                        "editor" {
+//                            attribute("xml:id", editorId)
+//                            -editorName
+//                            comment(editorUrl)
+//                        }
+//                    }
+//                    "publicationStmt" {
+//                        "publisher" {
+//                            "name" {
+//                                attribute("ref", "https://huygens.knaw.nl")
+//                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
+//                            }
+//                        }
+//                        "date" {
+//                            attribute("when", currentDate)
+//                            -currentDate
+//                        }
+//                        "ptr" {
+//                            attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/${entry.id}")
+//                        }
+//                    }
+//                    "sourceDesc" {
+//                        "msDesc" {
+//                            "msIdentifier" {
+//                                "country" {}
+//                                "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
+//                                "institution" { metadataMap[letterMetadata.institution] ?: "" }
+////                                "repository" { }
+////                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
+//                                "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+//                            }
+//                            "physDesc" {
+//                                "objectDesc" {
+//                                    attribute("form", "letter")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//                "profileDesc" {
+//                    "correspDesc" {
+//                        sentCorrespActionNode(metadataMap)
+//
+//                        val receiveString = metadataMap[letterMetadata.recipient] ?: ""
+//                        val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
+//                        correspActionNode(
+//                            "received",
+//                            firstReceivers,
+//                            metadataMap[letterMetadata.recipientPlace]
+//                        )
+//                        forwardReceivers?.let {
+//                            correspActionNode(
+//                                "received",
+//                                forwardReceivers,
+//                                metadataMap[letterMetadata.recipientPlace]
+//                            )
+//                        }
+//                    }
+//                }
+            }
+            facsimileNode(entries, projectName)
+            "text" {
+                attribute("xml:id", "og")
+                "body" {
+                    attribute("divRole", "original-translation")
+                    "div" {
+                        val entryCounter = AtomicInt(1)
+                        attribute("xml:lang", "mhg")
+                        attribute("xml:id", "og-mhg")
+                        attribute("type", "original")
+                        entriesPerChapter.forEach { (chapter, entries) ->
+                            "div" {
+                                attribute("xml:id", "og-mhg-$chapter")
+                                attribute("n", chapter)
+                                entries.forEach { entry ->
+                                    val entryMetadata = entry.metadata.asMap()
+                                    val folioNr = entryMetadata["Folionummer"]!!
+                                    "pb" {
+                                        attribute("xml:id", "pb-mgh-$folioNr")
+                                        attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                                        attribute("n", folioNr)
+                                    }
+                                    metadataCommentNodes(entry)
+                                }
+                            }
+                        }
+                    }
+                    "div" {
+                        attribute("xml:lang", "dum")
+                        attribute("xml:id", "og-dum")
+                        attribute("type", "translation")
+                    }
+                    "div" {
+                        attribute("xml:lang", "de")
+                        attribute("xml:id", "og-de")
+                        attribute("type", "translation-unaligned")
+                    }
+                }
+            }
+
+        }.toString(printOptions = printOptions)
+    }
 
     private fun loadAnnoNumToRefTarget(annoNumToRefTargetPath: String?): Map<String, String> {
         return if (annoNumToRefTargetPath == null) {
@@ -33,188 +191,232 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         }
     }
 
-    fun entryToTEI(
+    private fun Node.teiHeaderNode(
         entry: Entry,
-        teiName: String
-    ): String {
-        val printOptions = PrintOptions(
-            singleLineTextElements = true,
-            indent = "  ",
-            useSelfClosingTags = true
-        )
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val currentDate = LocalDateTime.now().format(formatter)
-        val metadataMap = entry.metadata.associate { it.field to it.value }
-        val projectName = projectConfig.projectName
-        val title = entry.name
-        val editorName = conversionConfig.editor.name
-        val editorId = conversionConfig.editor.id
-        val editorUrl = conversionConfig.editor.url
+        title: String,
+        editorId: String,
+        editorName: String,
+        editorUrl: String,
+        currentDate: String,
+        projectName: String,
+        metadataMap: Map<String, String>,
+        letterMetadata: LetterMetadataConfig
+    ) {
+        "teiHeader" {
+            fileDesc(
+                entry,
+                title,
+                editorId,
+                editorName,
+                editorUrl,
+                currentDate,
+                projectName,
+                metadataMap,
+                letterMetadata
+            )
+            profileDesc(metadataMap, letterMetadata)
+        }
+    }
 
-        return xml("TEI") {
-            globalProcessingInstruction("editem", Pair("template", "letter"))
-            globalProcessingInstruction(
-                "xml-model",
-                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
-                Pair("type", "application/xml"),
-                Pair("schematypens", "http://relaxng.org/ns/structure/1.0"),
-            )
-            globalProcessingInstruction(
-                "xml-model",
-                Pair("href", "https://xmlschema.huygens.knaw.nl/editem-letter.rng"),
-                Pair("type", "application/xml"),
-                Pair("schematypens", "http://purl.oclc.org/dsdl/schematron"),
-            )
-            version = XmlVersion.V10
-            encoding = "UTF-8"
-            xmlns = "http://www.tei-c.org/ns/1.0"
-//            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
-            "teiHeader" {
-                "fileDesc" {
-                    "titleStmt" {
-                        "title" {
-                            comment(entry.name)
-                            -title
-                        }
-                        "editor" {
-                            attribute("xml:id", editorId)
-                            -editorName
-                            comment(editorUrl)
-                        }
-                    }
-                    "publicationStmt" {
-                        "publisher" {
-                            "name" {
-                                attribute("ref", "https://huygens.knaw.nl")
-                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
-                            }
-                        }
-                        "date" {
-                            attribute("when", currentDate)
-                            -currentDate
-                        }
-                        "ptr" {
-                            attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/${entry.id}")
-                        }
-                    }
-                    "sourceDesc" {
-                        "msDesc" {
-                            "msIdentifier" {
-                                "country" {}
-                                "settlement" { metadataMap[conversionConfig.letterMetadata.settlement] ?: "" }
-                                "institution" { metadataMap[conversionConfig.letterMetadata.institution] ?: "" }
-//                                "repository" { }
-//                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
-                                "idno" { -(metadataMap[conversionConfig.letterMetadata.idno] ?: "") }
-                            }
-                            "physDesc" {
-                                "objectDesc" {
-                                    attribute("form", "letter")
-                                }
-                            }
-                        }
+    private fun Node.fileDesc(
+        entry: Entry,
+        title: String,
+        editorId: String,
+        editorName: String,
+        editorUrl: String,
+        currentDate: String,
+        projectName: String,
+        metadataMap: Map<String, String>,
+        letterMetadata: LetterMetadataConfig
+    ) {
+        "fileDesc" {
+            "titleStmt" {
+                "title" {
+                    comment(entry.name)
+                    -title
+                }
+                "editor" {
+                    attribute("xml:id", editorId)
+                    -editorName
+                    comment(editorUrl)
+                }
+            }
+            "publicationStmt" {
+                "publisher" {
+                    "name" {
+                        attribute("ref", "https://huygens.knaw.nl")
+                        -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
                     }
                 }
-                "profileDesc" {
-                    "correspDesc" {
-                        sentCorrespActionNode(metadataMap)
-
-                        val receiveString = metadataMap[conversionConfig.letterMetadata.recipient] ?: ""
-                        val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
-                        correspActionNode(
-                            "received",
-                            firstReceivers,
-                            metadataMap[conversionConfig.letterMetadata.recipientPlace]
-                        )
-                        forwardReceivers?.let {
-                            correspActionNode(
-                                "received",
-                                forwardReceivers,
-                                metadataMap[conversionConfig.letterMetadata.recipientPlace]
-                            )
+                "date" {
+                    attribute("when", currentDate)
+                    -currentDate
+                }
+                "ptr" {
+                    attribute("target", "https://$projectName.huygens.knaw.nl/edition/entry/${entry.id}")
+                }
+            }
+            "sourceDesc" {
+                "msDesc" {
+                    "msIdentifier" {
+                        "country" {}
+                        "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
+                        "institution" { metadataMap[letterMetadata.institution] ?: "" }
+                        //                                "repository" { }
+                        //                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
+                        "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+                    }
+                    "physDesc" {
+                        "objectDesc" {
+                            attribute("form", "letter")
                         }
                     }
                 }
             }
-            if (entry.facsimiles.isNotEmpty()) {
-                "facsimile" {
-                    entry.facsimiles.forEachIndexed { i, facs ->
-                        "surface" {
-                            attribute("n", "${i + 1}")
-                            attribute("xml:id", "s${i + 1}")
+        }
+    }
+
+    private fun Node.profileDesc(
+        metadataMap: Map<String, String>,
+        letterMetadata: LetterMetadataConfig
+    ) {
+        "profileDesc" {
+            "correspDesc" {
+                sentCorrespActionNode(metadataMap)
+
+                val receiveString = metadataMap[letterMetadata.recipient] ?: ""
+                val (firstReceivers, forwardReceivers) = receiveString.biSplit("-->")
+                correspActionNode(
+                    "received",
+                    firstReceivers,
+                    metadataMap[letterMetadata.recipientPlace]
+                )
+                forwardReceivers?.let {
+                    correspActionNode(
+                        "received",
+                        forwardReceivers,
+                        metadataMap[letterMetadata.recipientPlace]
+                    )
+                }
+            }
+        }
+    }
+
+    private fun Node.facsimileNode(
+        entries: List<Entry>,
+        baseName: String
+    ) {
+        val facsimiles = entries.flatMap { it.facsimiles }
+        if (facsimiles.isNotEmpty()) {
+            "facsimile" {
+                facsimiles.forEachIndexed { i, facs ->
+                    "surface" {
+                        attribute("n", "${i + 1}")
+                        attribute("xml:id", "s${i + 1}")
+                        if (facs.title.isNotEmpty() && facs.title != "facsimile") {
                             comment(facs.title)
-                            "graphic" {
-                                attribute("url", "$teiName-${(i + 1).toString().padStart(2, '0')}")
-                            }
+                        }
+                        "graphic" {
+                            attribute("url", "$baseName-${(i + 1).toString().padStart(2, '0')}")
                         }
                     }
                 }
             }
-            entry.metadata
-                .filter { it.value.isNotEmpty() }
-                .forEach {
-                    comment("${it.field.asType()} = ${it.value}")
-                }
-            val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
-            "text" {
-                "body" {
-                    attribute("divRole", conversionConfig.divRole)
-                    entry.parallelTexts
-                        .filter { it.value.text.isNotEmpty() }
-                        .toSortedMap()
-//                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
-                        .forEach { (layerName, textLayer) ->
-                            val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
-                            val lang = when {
-                                (divType == "translation") -> "nl"
-                                else -> (metadataMap[conversionConfig.letterMetadata.language])?.asIsoLang() ?: "nl"
-                            }
-                            val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
-                            annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
-                            val text = textLayer.text
-                                .transform(layerAnnotationMap, annoNumToRefTarget)
-                                .removeLineBreaks()
-                                .convertVerticalSpace()
-                                .convertHorizontalSpace()
-                                .setParagraphs(divType, lang)
-                                .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
-//                                .wrapLines(80)
-                                .wrapSpaceElementWithNewLines()
-                                .replace("\n\n\n", "\n\n")
-                            "div" {
-                                attribute("type", divType)
-                                attribute("xml:lang", lang)
-                                -"\n"
-                                if (text.contains("</p>")) {
+        }
+    }
+
+    private fun Node.metadataCommentNodes(entry: Entry) {
+        entry.metadata
+            .filter { it.value.isNotEmpty() }
+            .forEach { comment("${it.field} = ${it.value}") }
+    }
+
+    private fun Node.textNode(
+        entry: Entry,
+        metadataMap: Map<String, String>,
+        letterMetadata: LetterMetadataConfig
+    ): MutableMap<Long, AnnotationData> {
+        val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
+        "text" {
+            "body" {
+                attribute("divRole", conversionConfig.divRole)
+                entry.parallelTexts
+                    .filter { it.value.text.isNotEmpty() }
+                    .toSortedMap()
+                    //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
+                    .forEach { (layerName, textLayer) ->
+                        val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
+                        val lang = when {
+                            (divType == "translation") -> "nl"
+                            else -> (metadataMap[letterMetadata.language])?.asIsoLang() ?: "nl"
+                        }
+                        val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
+                        annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
+                        val text = textLayer.text
+                            .transform(layerAnnotationMap, annoNumToRefTarget)
+                            .removeLineBreaks()
+                            .convertVerticalSpace()
+                            .convertHorizontalSpace()
+                            .setParagraphs(divType, lang)
+                            .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
+                            //                                .wrapLines(80)
+                            .wrapSpaceElementWithNewLines()
+                            .replace("\n\n\n", "\n\n")
+                        "div" {
+                            attribute("type", divType)
+                            attribute("xml:lang", lang)
+                            -"\n"
+                            if (text.contains("</p>")) {
+                                unsafeText(text)
+                            } else {
+                                "p" {
+                                    attribute("xml:id", "p.$divType.$lang.1")
                                     unsafeText(text)
-                                } else {
-                                    "p" {
-                                        attribute("xml:id", "p.$divType.$lang.1")
-                                        unsafeText(text)
-                                    }
                                 }
                             }
                         }
-                }
+                    }
             }
-            if (annotationMap.isNotEmpty()) {
-                val noteCounter = AtomicInt(1)
-                "standOff" {
-                    "listAnnotation" {
-                        attribute("type", "notes")
-                        annotationMap.forEach { (id, data) ->
-                            val noteText = data.text.ifEmpty { data.annotatedText }
-                            "note" {
-                                attribute("xml:id", "note_$id")
-                                attribute("n", noteCounter.andIncrement)
-                                comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
-                                "p" { -noteText }
-                            }
+        }
+        return annotationMap
+    }
+
+    private fun Node.standOffNode(annotationMap: MutableMap<Long, AnnotationData>) {
+        if (annotationMap.isNotEmpty()) {
+            val noteCounter = AtomicInt(1)
+            "standOff" {
+                "listAnnotation" {
+                    attribute("type", "notes")
+                    annotationMap.forEach { (id, data) ->
+                        val noteText = data.text.ifEmpty { data.annotatedText }
+                        "note" {
+                            attribute("xml:id", "note_$id")
+                            attribute("n", noteCounter.andIncrement)
+                            comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
+                            "p" { -noteText }
                         }
                     }
                 }
             }
-        }.toString(printOptions = printOptions)
+        }
+    }
+
+    private fun Node.prologNodes(projectType: String) {
+        globalProcessingInstruction("editem", Pair("template", projectType))
+        globalProcessingInstruction(
+            "xml-model",
+            Pair("href", "http://xmlschema.huygens.knaw.nl/editem-$projectType.rng"),
+            Pair("type", "application/xml"),
+            Pair("schematypens", "http://relaxng.org/ns/structure/1.0"),
+        )
+        globalProcessingInstruction(
+            "xml-model",
+            Pair("href", "http://xmlschema.huygens.knaw.nl/editem-$projectType.rng"),
+            Pair("type", "application/xml"),
+            Pair("schematypens", "http://purl.oclc.org/dsdl/schematron"),
+        )
+        version = XmlVersion.V10
+        encoding = "UTF-8"
     }
 
     private fun Node.correspActionNode(
@@ -241,10 +443,11 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     private fun Node.sentCorrespActionNode(
         metadataMap: Map<String, String>
     ) {
-        val senders = (metadataMap[conversionConfig.letterMetadata.sender] ?: "").split("/")
-        val date = metadataMap[conversionConfig.letterMetadata.date] ?: ""
+        val letterMetadata = conversionConfig.letterMetadata!!
+        val senders = (metadataMap[letterMetadata.sender] ?: "").split("/")
+        val date = metadataMap[letterMetadata.date] ?: ""
         val place =
-            metadataMap[conversionConfig.letterMetadata.senderPlace] ?: ""
+            metadataMap[letterMetadata.senderPlace] ?: ""
         "correspAction" {
             attribute("type", "sent")
             senders
@@ -254,7 +457,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     org?.let { orgRsNode(org) }
                 }
             "date" {
-                dateAttributeFactory.getDateAttributes(date).forEach {
+                dateAttributeFactory?.getDateAttributes(date)?.forEach {
                     attribute(it.key, it.value)
                 }
                 -date
@@ -286,15 +489,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 attribute("ref", "orgs.xml#$orgId")
             }
             -org
-        }
-    }
-
-    private fun String.biSplit(delimiter: String): Pair<String, String?> {
-        val parts = split(delimiter)
-        return if (parts.size == 1) {
-            Pair(this, null)
-        } else {
-            Pair(parts[0], parts[1])
         }
     }
 
@@ -355,14 +549,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             .replace("<nbsp></nbsp>", "<nbsp/>")
             .replace(" <nbsp/>", "<nbsp/><nbsp/>")
             .replace("<nbsp/> ", "<nbsp/><nbsp/>")
-    }
-
-    private fun String.replaceWhileFound(oldValue: String, newValue: String): String {
-        var string = this
-        while (string.contains(oldValue)) {
-            string = string.replace(oldValue, newValue)
-        }
-        return string
     }
 
     private fun String.setParagraphs(divType: String, lang: String): String {
@@ -487,6 +673,27 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             ).replace(
                 SPACE_ELEMENT_LINE, "\n$SPACE_ELEMENT_LINE\n"
             )
+
+        private fun String.biSplit(delimiter: String): Pair<String, String?> {
+            val parts = split(delimiter)
+            return if (parts.size == 1) {
+                Pair(this, null)
+            } else {
+                Pair(parts[0], parts[1])
+            }
+        }
+
+        private fun String.replaceWhileFound(oldValue: String, newValue: String): String {
+            var string = this
+            while (string.contains(oldValue)) {
+                string = string.replace(oldValue, newValue)
+            }
+            return string
+        }
+
+        private fun ArrayList<Metadata>.asMap(): Map<String, String> =
+            this.associate { it.field to it.value }
     }
 
 }
+

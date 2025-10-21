@@ -25,6 +25,8 @@ object ConfigTool {
     fun defaultConfig(): ElabCtlConfig =
         ElabCtlConfig(
             projectName = "",
+            title = "",
+            type = ProjectType.LETTERS,
             editor = EditorConfig(
                 id = "",
                 name = "",

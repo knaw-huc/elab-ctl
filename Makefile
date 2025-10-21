@@ -55,7 +55,8 @@ brieven-correspondenten-1900-rsync:
 
 .PHONY: browse-brieven-correspondenten-1900
 browse-brieven-correspondenten-1900:
-	@open https://gitlab.huc.knaw.nl/elaborate/brieven-correspondenten-1900
+	@open https://gitlab.huc.knaw.nl/eDITem/brieven-correspondenten-1900
+	@open https://gitlab.huc.knaw.nl/eDITem/brieven-correspondenten-1900-settings
 
 # correspondentie-bolland-en-cosijn
 .PHONY: correspondentie-bolland-en-cosijn
@@ -73,7 +74,8 @@ correspondentie-bolland-en-cosijn-rsync:
 
 .PHONY: browse-correspondentie-bolland-en-cosijn
 browse-correspondentie-bolland-en-cosijn:
-	@open https://gitlab.huc.knaw.nl/elaborate/correspondentie-bolland-en-cosijn
+	@open https://gitlab.huc.knaw.nl/eDITem/correspondentie-bolland-en-cosijn
+	@open https://gitlab.huc.knaw.nl/eDITem/correspondentie-bolland-en-cosijn-settings
 
 # clusiuscorrespondence
 .PHONY: clusiuscorrespondence
@@ -91,7 +93,27 @@ clusiuscorrespondence-rsync:
 
 .PHONY: browse-clusiuscorrespondence
 browse-clusiuscorrespondence:
-	@open https://gitlab.huc.knaw.nl/elaborate/clusiuscorrespondence
+	@open https://gitlab.huc.knaw.nl/eDITem/clusius-correspondence
+	@open https://gitlab.huc.knaw.nl/eDITem/clusius-correspondence-settings
+
+# ogier
+.PHONY: ogier
+ogier:
+	./bin/elabctl archive ./data/elab4-$(OGIER).war
+	echo "validating tei export..."
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(OGIER)/schema/editem-about.rng build/zip/elab4-$(OGIER)/about/*.xml > out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(OGIER)/schema/editem-letter.rng build/zip/elab4-$(OGIER)/letters/*.xml >> out/xml-validate.log
+	less out/xml-validate.log
+
+.PHONY: ogier-rsync
+ogier-rsync:
+	rsync -rav build/zip/elab4-$(OGIER)/* ~/workspaces/editem/elaborate-export/$(OGIER)/tei/
+	cd ~/workspaces/editem/elaborate-export/$(OGIER) && (git commit -a -m "new elaborate export" && git push)
+
+.PHONY: browse-ogier
+browse-ogier:
+	@open https://gitlab.huc.knaw.nl/eDITem/ogier
+	@open https://gitlab.huc.knaw.nl/eDITem/ogier-settings
 
 .PHONY: help
 help:
@@ -107,17 +129,17 @@ help:
 	@echo "  all-archives - run the tei export for all elaborate projects"
 	@echo
 	@echo "  $(BRICOR)        - to run the tei export for $(BRICOR)"
-	@echo "  $(BRICOR)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BRICOR)"
+	@echo "  $(BRICOR)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(BRICOR)"
 	@echo "  browse-$(BRICOR) - to open the $(BRICOR) gitlab repo in your browser"
 	@echo
 	@echo "  $(BOLCOS)        - to run the tei export for $(BOLCOS)"
-	@echo "  $(BOLCOS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(BOLCOS)"
+	@echo "  $(BOLCOS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(BOLCOS)"
 	@echo "  browse-$(BOLCOS) - to open the $(BOLCOS) gitlab repo in your browser"
 	@echo
 	@echo "  $(CLUSIUS)        - to run the tei export for $(CLUSIUS)"
-	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(CLUSIUS)"
+	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(CLUSIUS)"
 	@echo "  browse-$(CLUSIUS) - to open the $(CLUSIUS) gitlab repo in your browser"
 	@echo
-	@echo "  $(CLUSIUS)        - to run the tei export for $(CLUSIUS)"
-	@echo "  $(CLUSIUS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/elaborate/$(CLUSIUS)"
-	@echo "  browse-$(CLUSIUS) - to open the $(CLUSIUS) gitlab repo in your browser"
+	@echo "  $(OGIER)        - to run the tei export for $(OGIER)"
+	@echo "  $(OGIER)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(OGIER)"
+	@echo "  browse-$(OGIER) - to open the $(OGIER) gitlab repo in your browser"

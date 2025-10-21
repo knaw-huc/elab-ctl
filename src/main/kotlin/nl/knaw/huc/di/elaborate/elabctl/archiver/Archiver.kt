@@ -20,6 +20,7 @@ import kotlinx.serialization.json.decodeFromStream
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.config.ConfigTool.loadConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
+import nl.knaw.huc.di.elaborate.elabctl.config.ProjectType
 
 object Archiver {
 
@@ -38,8 +39,10 @@ object Archiver {
             val conversionConfig = loadConfig(projectConfig.projectName)
             val teiBuilder = TEIBuilder(projectConfig, conversionConfig)
             File("build/zip/$projectName/letters").deleteRecursively()
+            File("build/zip/$projectName/manuscript").deleteRecursively()
             File("build/zip/$projectName/about").deleteRecursively()
             File("build/zip/$projectName/letters").mkdirs()
+            File("build/zip/$projectName/manuscript").mkdirs()
             File("build/zip/$projectName/about").mkdirs()
             File("out").mkdirs()
             logger.info { "<= $warPath" }
@@ -59,34 +62,34 @@ object Archiver {
                 val entryTypeName = elabConfig.entryTermSingular
                 val entries = elabConfig.entries
                 val total = entries.size
-                entries
-//                .take(1)
-                    .forEachIndexed { i, entryDescription ->
-                        logger.info { "entry ${i + 1} / $total..." }
-                        logger.info { entryDescription }
-                        val teiName =
-                            teiName(entryTypeName, i + 1, entryDescription.shortName)
-                        val entry = loadEntry(zip, entryDescription)
-                        report.addEntry(entry, teiName)
+                when (conversionConfig.type) {
+                    ProjectType.LETTERS -> convertLettersProject(
+                        entries,
+                        total,
+                        entryTypeName,
+                        zip,
+                        report,
+                        scriptLines,
+                        facsimilePaths,
+                        teiBuilder,
+                        projectName,
+                        errors
+                    )
 
-                        processFacsimiles(teiName, entry.facsimiles, scriptLines)
-                        facsimilePaths.addAll(entry.facsimiles.map {
-                            it.thumbnail.replace(
-                                "http.*/jp2/".toRegex(),
-                                ""
-                            )
-                        })
+                    ProjectType.MANUSCRIPT -> convertManuscriptProject(
+                        entries,
+                        total,
+                        entryTypeName,
+                        zip,
+                        report,
+                        scriptLines,
+                        facsimilePaths,
+                        teiBuilder,
+                        projectName,
+                        errors
+                    )
 
-//                logger.info { entry.metadata }
-                        val tei = teiBuilder.entryToTEI(entry, teiName)
-                        val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
-                        if (!tei.isWellFormed()) {
-                            errors.add("file $teiPath is NOT well-formed!")
-                        }
-                        logger.info { "=> $teiPath" }
-                        Path(teiPath).writeText(tei)
-                        logger.info { "" }
-                    }
+                }
             }
             report.storeAsCsv()
             errors.addAll(convertWordPressExport(projectName, conversionConfig))
@@ -220,7 +223,7 @@ object Archiver {
         }
     }
 
-    private fun teiName(entryTypeName: String, i: Int, shortName: String): String =
+    fun teiName(entryTypeName: String, i: Int, shortName: String): String =
         "$entryTypeName-${i.toString().padStart(4, '0')}-${
             nonAlphaNumericRegex.replace(shortName.trim()) { "_" }
         }".trim(
@@ -245,6 +248,92 @@ object Archiver {
         logger.info { prettyJson.encodeToString(value = elabConfig) }
     }
 
+    private fun convertLettersProject(
+        entryDescriptions: ArrayList<EntryDescription>,
+        total: Int,
+        entryTypeName: String,
+        zip: ZipFile,
+        report: ConversionReporter,
+        scriptLines: MutableList<String>,
+        facsimilePaths: MutableList<String>,
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        errors: MutableList<String>
+    ) {
+        entryDescriptions
+//                .take(1)
+            .forEachIndexed { i, entryDescription ->
+                logger.info { "entry ${i + 1} / $total..." }
+                logger.info { entryDescription }
+                val teiName =
+                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                val entry = loadEntry(zip, entryDescription)
+                report.addEntry(entry, teiName)
+
+                processFacsimiles(teiName, entry.facsimiles, scriptLines)
+                facsimilePaths.addAll(entry.facsimiles.map {
+                    it.thumbnail.replace(
+                        "http.*/jp2/".toRegex(),
+                        ""
+                    )
+                })
+
+//                logger.info { entry.metadata }
+                val tei = teiBuilder.entryToTEI(entry, teiName)
+                val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
+                if (!tei.isWellFormed()) {
+                    errors.add("file $teiPath is NOT well-formed!")
+                }
+                logger.info { "=> $teiPath" }
+                Path(teiPath).writeText(tei)
+                logger.info { "" }
+            }
+    }
+
+    private fun convertManuscriptProject(
+        entryDescriptions: ArrayList<EntryDescription>,
+        total: Int,
+        entryTypeName: String,
+        zip: ZipFile,
+        report: ConversionReporter,
+        scriptLines: MutableList<String>,
+        facsimilePaths: MutableList<String>,
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        errors: MutableList<String>
+    ) {
+        entryDescriptions
+//                .take(1)
+            .forEachIndexed { i, entryDescription ->
+                logger.info { "entry ${i + 1} / $total..." }
+                logger.info { entryDescription }
+                val teiName =
+                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                val entry = loadEntry(zip, entryDescription)
+                report.addEntry(entry, teiName)
+
+                processFacsimiles(teiName, entry.facsimiles, scriptLines)
+                facsimilePaths.addAll(entry.facsimiles.map {
+                    it.thumbnail.replace(
+                        "http.*/jp2/".toRegex(),
+                        ""
+                    )
+                })
+
+//                logger.info { entry.metadata }
+            }
+        val shortName = projectName.substringAfter("elab4-")
+        val tei = teiBuilder.manuscriptToTEI(entryDescriptions.map { loadEntry(zip, it) }, shortName)
+        val teiPath = "build/zip/$projectName/manuscript/${shortName}.xml"
+        if (!tei.isWellFormed()) {
+            errors.add("file $teiPath is NOT well-formed!")
+        }
+        logger.info { "=> $teiPath" }
+        Path(teiPath).writeText(tei)
+        logger.info { "" }
+    }
+
     // TODO:
     // add shs256sum checksums of all files in the archive, in a file called `manifest-sha256.txt`
 }
+

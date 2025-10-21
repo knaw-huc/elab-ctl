@@ -1,10 +1,12 @@
 projectName: correspondentie-bolland-en-cosijn
+title: "Correspondentie Bolland en Cosijn"
+type: letters
 editor:
   name: Thijs Porck
   id: tp
   url: https://viaf.org/viaf/291714142
 divRole: doc-sections
-pageBreakEncoding: PAGE_BREAK_MARKER
+pageBreakEncoding: pageBreakMarker
 annoNumToRefTarget: data/correspondentie-bolland-en-cosijn-annonum-to-ref-target.json
 letterDates:
   earliestYear: 1879

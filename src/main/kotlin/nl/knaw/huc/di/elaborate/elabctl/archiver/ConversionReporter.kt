@@ -11,7 +11,7 @@ class ConversionReporter(val projectName: String, val conversionConfig: ElabCtlC
     val fields: MutableSet<String> = mutableSetOf()
     val editionEntryBaseUrl = "https://$projectName.huygens.knaw.nl/edition/entry"
     val letterTeiBaseUrl = "https://gitlab.huc.knaw.nl/elaborate/$projectName/-/blob/main/tei/letters"
-    val dateAttributeFactory = DateAttributeFactory(conversionConfig.letterDates)
+    val dateAttributeFactory = conversionConfig.letterDates?.let { DateAttributeFactory(it) }
 
     fun addEntry(entry: Entry, teiName: String) {
         val row = mutableMapOf<String, String>()
@@ -28,13 +28,13 @@ class ConversionReporter(val projectName: String, val conversionConfig: ElabCtlC
         row[field1] = "$letterTeiBaseUrl/${teiName}.xml"
         fields.add(field1)
 
-        val date = row[conversionConfig.letterMetadata.date] ?: ""
-        dateAttributeFactory.getDateAttributes(date).forEach { (field, value) ->
+        val date = row[conversionConfig.letterMetadata?.date] ?: ""
+        dateAttributeFactory?.getDateAttributes(date)?.forEach { (field, value) ->
             row[field] = value
             fields.add(field)
         }
 
-        val language = row[conversionConfig.letterMetadata.language] ?: ""
+        val language = row[conversionConfig.letterMetadata?.language] ?: ""
         val langField = "lang"
         row[langField] = language.asIsoLang()
         fields.add(langField)
@@ -52,57 +52,58 @@ class ConversionReporter(val projectName: String, val conversionConfig: ElabCtlC
 
         exportedFields.add("TEI")
         labels.add("TEI")
+        conversionConfig.letterMetadata?.let { letterMetadataConfig ->
+            exportedFields.add(letterMetadataConfig.sender)
+            labels.add("sentPerson (${letterMetadataConfig.sender})")
 
-        exportedFields.add(conversionConfig.letterMetadata.sender)
-        labels.add("sentPerson (${conversionConfig.letterMetadata.sender})")
+            exportedFields.add(letterMetadataConfig.senderPlace)
+            labels.add("sentPlaceName (${letterMetadataConfig.senderPlace})")
 
-        exportedFields.add(conversionConfig.letterMetadata.senderPlace)
-        labels.add("sentPlaceName (${conversionConfig.letterMetadata.senderPlace})")
+            exportedFields.add(letterMetadataConfig.date)
+            labels.add("sentDate (${letterMetadataConfig.date})")
 
-        exportedFields.add(conversionConfig.letterMetadata.date)
-        labels.add("sentDate (${conversionConfig.letterMetadata.date})")
+            exportedFields.add("when")
+            labels.add("when")
 
-        exportedFields.add("when")
-        labels.add("when")
+            exportedFields.add("notBefore")
+            labels.add("notBefore")
 
-        exportedFields.add("notBefore")
-        labels.add("notBefore")
+            exportedFields.add("notAfter")
+            labels.add("notAfter")
 
-        exportedFields.add("notAfter")
-        labels.add("notAfter")
+            exportedFields.add(letterMetadataConfig.recipient)
+            labels.add("receivedPerson (${letterMetadataConfig.recipient})")
 
-        exportedFields.add(conversionConfig.letterMetadata.recipient)
-        labels.add("receivedPerson (${conversionConfig.letterMetadata.recipient})")
+            letterMetadataConfig.recipientPlace?.let {
+                exportedFields.add(it)
+                labels.add("receivedPlaceName (${letterMetadataConfig.recipientPlace})")
+            }
 
-        conversionConfig.letterMetadata.recipientPlace?.let {
-            exportedFields.add(it)
-            labels.add("receivedPlaceName (${conversionConfig.letterMetadata.recipientPlace})")
-        }
+            exportedFields.add(letterMetadataConfig.language)
+            labels.add("language (${letterMetadataConfig.language})")
 
-        exportedFields.add(conversionConfig.letterMetadata.language)
-        labels.add("language (${conversionConfig.letterMetadata.language})")
+            exportedFields.add("lang")
+            labels.add("lang")
 
-        exportedFields.add("lang")
-        labels.add("lang")
+            letterMetadataConfig.idno?.let {
+                exportedFields.add(it)
+                labels.add("idno ($it)")
+            }
 
-        conversionConfig.letterMetadata.idno?.let {
-            exportedFields.add(it)
-            labels.add("idno ($it)")
-        }
+            letterMetadataConfig.settlement?.let {
+                exportedFields.add(it)
+                labels.add("settlement ($it)")
+            }
 
-        conversionConfig.letterMetadata.settlement?.let {
-            exportedFields.add(it)
-            labels.add("settlement ($it)")
-        }
+            letterMetadataConfig.institution?.let {
+                exportedFields.add(it)
+                labels.add("institution ($it)")
+            }
 
-        conversionConfig.letterMetadata.institution?.let {
-            exportedFields.add(it)
-            labels.add("institution ($it)")
-        }
-
-        conversionConfig.letterMetadata.collection?.let {
-            exportedFields.add(it)
-            labels.add("collection ($it)")
+            letterMetadataConfig.collection?.let {
+                exportedFields.add(it)
+                labels.add("collection ($it)")
+            }
         }
 
         val remainingFields = fields - exportedFields.toSet()

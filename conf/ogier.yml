@@ -1,21 +1,9 @@
 projectName: "ogier"
+title: "Ogier van Denemerken"
+type: manuscript
 editor:
   id: "ab"
   name: "Amand Berteloot"
   url: "https://viaf.org/viaf/56732943"
 divRole: ""
-pageBreakEncoding: "NONE"
-letterDates:
-  earliestYear: 1900
-  latestYear: 2000
-letterMetadata:
-  sender: "Sender"
-  senderPlace: "Place"
-  recipient: ""
-  recipientPlace: null
-  date: ""
-  language: ""
-  idno: null
-  settlement: null
-  institution: null
-  collection: null
+pageBreakEncoding: none

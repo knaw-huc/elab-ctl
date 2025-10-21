@@ -45,16 +45,16 @@ fun generateManifests(args: List<String>) {
     logger.debug { "args=${args}" }
     if (args.size >= 2) {
         val zipPath = args[0]
-        val projectName = args[1]
+        val warPath = args[1]
         val mode = when {
             args.size == 3 && (args[2] == "--single" || args[2] == "-s") -> ManifestGenerator.Mode.PROJECT
             else -> ManifestGenerator.Mode.ENTRY
         }
-        ManifestGenerator.generateFrom(zipPath, projectName, mode)
+        ManifestGenerator.generateFrom(zipPath, warPath, mode)
     } else {
-        println("missing argument(s): zip-path     - path to the facsimiles.zip")
-        println("                     project-name - the project name")
-        println("                     [--single | -s]   - generate a single manifest for the whole project (otherwise, one per entry)")
+        println("missing argument(s): zip-path        - path to the facsimiles.zip")
+        println("                     war-path        - path to the elab4-<project>.war file")
+        println("                     [--single | -s] - generate a single manifest for the whole project (otherwise, one per entry)")
     }
 }
 
