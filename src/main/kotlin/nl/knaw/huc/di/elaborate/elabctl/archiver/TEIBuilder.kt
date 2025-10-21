@@ -166,9 +166,28 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                         }
                     }
                     "div" {
+                        val entryCounter = AtomicInt(1)
                         attribute("xml:lang", "dum")
                         attribute("xml:id", "og-dum")
                         attribute("type", "translation")
+                        entriesPerChapter.forEach { (chapter, entries) ->
+                            "div" {
+                                attribute("xml:id", "og-dum-$chapter")
+                                attribute("n", chapter)
+                                attribute("corresp", "#og-mgh-$chapter")
+                                entries.forEach { entry ->
+                                    val entryMetadata = entry.metadata.asMap()
+                                    val folioNr = entryMetadata["Folionummer"]!!
+                                    "pb" {
+                                        attribute("xml:id", "pb-dum-$folioNr")
+                                        attribute("corresp", "#pb-mgh-$folioNr")
+                                        attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                                        attribute("n", folioNr)
+                                    }
+                                    metadataCommentNodes(entry)
+                                }
+                            }
+                        }
                     }
                     "div" {
                         attribute("xml:lang", "de")
