@@ -1,11 +1,8 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
-import org.junit.jupiter.api.Test
-import nl.knaw.huc.di.elaborate.elabctl.manifests.ManifestV3Factory
-
 class ManifestFactoryTest {
 
-//    @Test
+    //    @Test
     fun `test reading facsimiles zip`() {
 //        val facsimileDimensionsList =
 //            FacsimileDimensionsFactory.readFacsimileDimensionsFromZipFilePath("facsimiles.zip")

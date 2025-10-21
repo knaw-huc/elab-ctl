@@ -239,14 +239,14 @@ object Archiver {
         }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun prettyPrint(elabConfig: EditionConfig) {
-        val prettyJson = Json { // this returns the JsonBuilder
-            prettyPrint = true
-            prettyPrintIndent = " "
-        }
-        logger.info { prettyJson.encodeToString(value = elabConfig) }
-    }
+//    @OptIn(ExperimentalSerializationApi::class)
+//    private fun prettyPrint(elabConfig: EditionConfig) {
+//        val prettyJson = Json { // this returns the JsonBuilder
+//            prettyPrint = true
+//            prettyPrintIndent = " "
+//        }
+//        logger.info { prettyJson.encodeToString(value = elabConfig) }
+//    }
 
     private fun convertLettersProject(
         entryDescriptions: ArrayList<EntryDescription>,

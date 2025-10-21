@@ -610,29 +610,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             "<pb xml:id=\"pb.$divType.$lang.$number\" f=\"$number\" facs=\"#s$number\" n=\"$number\"/>"
         }
 
-    private fun String.wrapLines(width: Int): String {
-        val result = StringBuilder()
-        this.trim()
-            .split("\n")
-            .forEach { line ->
-                var currentLineLength = 0
-                line.split(" ")
-                    .forEach { word ->
-                        if (currentLineLength + word.length > width) {
-                            result.append("\n")
-                            currentLineLength = 0
-                        } else if (currentLineLength > 0) {
-                            result.append(" ")
-                            currentLineLength++
-                        }
-                        result.append(word)
-                        currentLineLength += word.length
-                    }
-                result.append("\n")
-            }
-        return result.toString().trim()
-    }
-
     companion object {
         const val SPACE_ELEMENT_LINE = "\n<space dim=\"vertical\" unit=\"lines\" quantity=\"1\"/>\n"
         const val ENCODED_PAGE_BREAK = """<hi rend="bold">¶</hi>"""
@@ -689,6 +666,29 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 string = string.replace(oldValue, newValue)
             }
             return string
+        }
+
+        fun String.wrapLines(width: Int): String {
+            val result = StringBuilder()
+            this.trim()
+                .split("\n")
+                .forEach { line ->
+                    var currentLineLength = 0
+                    line.split(" ")
+                        .forEach { word ->
+                            if (currentLineLength + word.length >= width) {
+                                result.append("\n")
+                                currentLineLength = 0
+                            } else if (currentLineLength > 0) {
+                                result.append(" ")
+                                currentLineLength++
+                            }
+                            result.append(word)
+                            currentLineLength += word.length
+                        }
+                    result.append("\n")
+                }
+            return result.toString().trim()
         }
 
         private fun ArrayList<Metadata>.asMap(): Map<String, String> =

@@ -17,7 +17,7 @@ import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
 object ManifestGenerator {
 
     const val PROD_IIIF_BASE_URL = "https://iiif-text.huc.knaw.nl/iiif/3"
-    const val DEV_IIIF_BASE_URL = "https://tt-iiif.dev.diginfra.org/iiif/3"
+//    const val DEV_IIIF_BASE_URL = "https://tt-iiif.dev.diginfra.org/iiif/3"
 
     @OptIn(ExperimentalSerializationApi::class)
     fun generateFrom(zipPath: String, warPath: String, mode: Mode) {

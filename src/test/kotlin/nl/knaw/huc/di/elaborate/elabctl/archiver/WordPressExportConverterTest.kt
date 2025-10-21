@@ -6,6 +6,7 @@ import nl.knaw.huc.di.elaborate.elabctl.config.ElabCtlConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.LetterDateConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.LetterMetadataConfig
 import nl.knaw.huc.di.elaborate.elabctl.config.PageBreakEncoding
+import nl.knaw.huc.di.elaborate.elabctl.config.ProjectType
 
 class WordPressExportConverterTest {
 
@@ -25,6 +26,8 @@ class WordPressExportConverterTest {
         val conversionConfig =
             ElabCtlConfig(
                 projectName = projectName,
+                title = "",
+                type = ProjectType.LETTERS,
                 editor = EditorConfig("id", "name", "url"),
                 divRole = "original",
                 pageBreakEncoding = PageBreakEncoding.PILCROW,
