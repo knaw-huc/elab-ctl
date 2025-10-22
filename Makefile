@@ -102,7 +102,7 @@ ogier:
 	./bin/elabctl archive ./data/elab4-$(OGIER).war
 	echo "validating tei export..."
 	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(OGIER)/schema/editem-about.rng build/zip/elab4-$(OGIER)/about/*.xml > out/xml-validate.log
-	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(OGIER)/schema/editem-letter.rng build/zip/elab4-$(OGIER)/letters/*.xml >> out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(OGIER)/schema/editem-letter.rng build/zip/elab4-$(OGIER)/manifests/*.xml >> out/xml-validate.log
 	less out/xml-validate.log
 
 .PHONY: ogier-rsync

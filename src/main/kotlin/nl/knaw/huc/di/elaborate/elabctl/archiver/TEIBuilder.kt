@@ -143,61 +143,123 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 attribute("xml:id", "og")
                 "body" {
                     attribute("divRole", "original-translation")
-                    "div" {
-                        val entryCounter = AtomicInt(1)
-                        attribute("xml:lang", "mhg")
-                        attribute("xml:id", "og-mhg")
-                        attribute("type", "original")
-                        entriesPerChapter.forEach { (chapter, entries) ->
-                            "div" {
-                                attribute("xml:id", "og-mhg-$chapter")
-                                attribute("n", chapter)
-                                entries.forEach { entry ->
-                                    val entryMetadata = entry.metadata.asMap()
-                                    val folioNr = entryMetadata["Folionummer"]!!
-                                    "pb" {
-                                        attribute("xml:id", "pb-mgh-$folioNr")
-                                        attribute("facs", "#s${entryCounter.getAndIncrement()}")
-                                        attribute("n", folioNr)
-                                    }
-                                    metadataCommentNodes(entry)
-                                }
-                            }
-                        }
-                    }
-                    "div" {
-                        val entryCounter = AtomicInt(1)
-                        attribute("xml:lang", "dum")
-                        attribute("xml:id", "og-dum")
-                        attribute("type", "translation")
-                        entriesPerChapter.forEach { (chapter, entries) ->
-                            "div" {
-                                attribute("xml:id", "og-dum-$chapter")
-                                attribute("n", chapter)
-                                attribute("corresp", "#og-mgh-$chapter")
-                                entries.forEach { entry ->
-                                    val entryMetadata = entry.metadata.asMap()
-                                    val folioNr = entryMetadata["Folionummer"]!!
-                                    "pb" {
-                                        attribute("xml:id", "pb-dum-$folioNr")
-                                        attribute("corresp", "#pb-mgh-$folioNr")
-                                        attribute("facs", "#s${entryCounter.getAndIncrement()}")
-                                        attribute("n", folioNr)
-                                    }
-                                    metadataCommentNodes(entry)
-                                }
-                            }
-                        }
-                    }
-                    "div" {
-                        attribute("xml:lang", "de")
-                        attribute("xml:id", "og-de")
-                        attribute("type", "translation-unaligned")
-                    }
+                    manuscriptOriginalDivNode(entriesPerChapter)
+                    manuscriptTranslationDivNode(entriesPerChapter)
+                    manuscriptTranslationUnalignedDivNode(entriesPerChapter)
                 }
             }
 
         }.toString(printOptions = printOptions)
+    }
+
+    private fun Node.manuscriptOriginalDivNode(entriesPerChapter: Map<String, List<Entry>>) {
+        val entryCounter = AtomicInt(1)
+        val lineCounter = AtomicInt(1)
+        "div" {
+            attribute("xml:lang", "mhg")
+            attribute("xml:id", "og-mhg")
+            attribute("type", "original")
+            entriesPerChapter.forEach { (chapter, entries) ->
+                "div" {
+                    attribute("xml:id", "og-mhg-$chapter")
+                    attribute("n", chapter)
+                    entries.forEach { entry ->
+                        val entryMetadata = entry.metadata.asMap()
+                        val folioNr = entryMetadata["Folionummer"]!!
+                        "pb" {
+                            attribute("xml:id", "pb-mgh-$folioNr")
+                            attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                            attribute("n", folioNr)
+                        }
+                        metadataCommentNodes(entry)
+                        val textLayer = entry.parallelTexts["Transcriptie"]!!
+                        textLayer.text.split("<br>").forEach { line ->
+                            val lineNo = lineCounter.getAndIncrement()
+                            "l" {
+                                attribute("xml:id", "og-mhg-$chapter-$lineNo")
+                                attribute("n", lineNo)
+                                unsafeText(line.replace("&nbsp;", " "))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun Node.manuscriptTranslationDivNode(entriesPerChapter: Map<String, List<Entry>>) {
+        val entryCounter = AtomicInt(1)
+        val lineCounter = AtomicInt(1)
+        "div" {
+            attribute("xml:lang", "dum")
+            attribute("xml:id", "og-dum")
+            attribute("type", "translation")
+            entriesPerChapter.forEach { (chapter, entries) ->
+                "div" {
+                    attribute("xml:id", "og-dum-$chapter")
+                    attribute("n", chapter)
+                    attribute("corresp", "#og-mgh-$chapter")
+                    entries.forEach { entry ->
+                        val entryMetadata = entry.metadata.asMap()
+                        val folioNr = entryMetadata["Folionummer"]!!
+                        "pb" {
+                            attribute("xml:id", "pb-dum-$folioNr")
+                            attribute("corresp", "#pb-mgh-$folioNr")
+                            attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                            attribute("n", folioNr)
+                        }
+                        //                                    metadataCommentNodes(entry)
+                        val textLayer = entry.parallelTexts["Reconstructie"]!!
+                        textLayer.text.split("<br>").forEach { line ->
+                            val lineNo = lineCounter.getAndIncrement()
+                            "l" {
+                                attribute("xml:id", "og-dum-$chapter-$lineNo")
+                                attribute("n", lineNo)
+                                attribute("corresp", "#ogb-mgh-$chapter-$lineNo")
+                                unsafeText(line.replace("&nbsp;", " "))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun Node.manuscriptTranslationUnalignedDivNode(entriesPerChapter: Map<String, List<Entry>>) {
+        val entryCounter = AtomicInt(1)
+        val parCounter = AtomicInt(1)
+        "div" {
+            attribute("xml:lang", "de")
+            attribute("xml:id", "og-de")
+            attribute("type", "translation-unaligned")
+            entriesPerChapter.forEach { (chapter, entries) ->
+                "div" {
+                    attribute("xml:id", "og-de-$chapter")
+                    attribute("n", chapter)
+                    attribute("corresp", "#og-mgh-$chapter")
+                    entries.forEach { entry ->
+                        val entryMetadata = entry.metadata.asMap()
+                        val folioNr = entryMetadata["Folionummer"]!!
+                        "pb" {
+                            attribute("xml:id", "pb-de-$folioNr")
+                            attribute("corresp", "#pb-mgh-$folioNr")
+                            attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                            attribute("n", folioNr)
+                        }
+                        //                                    metadataCommentNodes(entry)
+                        val textLayer = entry.parallelTexts["Vertaling"]!!
+                        textLayer.text.split("<br><br>").forEach { line ->
+                            val parNo = parCounter.getAndIncrement()
+                            "p" {
+                                attribute("xml:id", "og-de-$chapter-$parNo")
+                                attribute("n", parNo)
+                                unsafeText(line.replace("&nbsp;", " ").replace("<br>", ""))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun loadAnnoNumToRefTarget(annoNumToRefTargetPath: String?): Map<String, String> {
