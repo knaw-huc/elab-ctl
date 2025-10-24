@@ -8,9 +8,9 @@ import nl.knaw.huc.di.elaborate.elabctl.archiver.TEIBuilder.Companion.horizontal
 
 class ArchiverTest {
 
-        @Test
+    @Test
     fun `test bolland-cosijn`() {
-        Archiver.archive(listOf("./data/elab4-correspondentie-bolland-en-cosijn.war"))
+//        Archiver.archive(listOf("./data/elab4-correspondentie-bolland-en-cosijn.war"))
     }
 
     @Test
@@ -22,6 +22,10 @@ class ArchiverTest {
         val twoNbsp = "two<nbsp/><nbsp/>spaces"
         val twoSpace = "two" + horizontalSpaceTag(2) + "spaces"
         assertEquals(twoSpace, twoNbsp.convertHorizontalSpace())
+
+        val threeNbsp = "three&nbsp;&nbsp;&nbsp;spaces"
+        val threeSpace = "three" + horizontalSpaceTag(3) + "spaces"
+        assertEquals(threeSpace, threeNbsp.convertHorizontalSpace())
     }
 
 }

@@ -67,7 +67,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     fun manuscriptToTEI(entries: List<Entry>, projectName: String): String {
-        val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Hoofdstuknummer"]!! }
+        val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Hoofdstuknummer"]!!.replace(" ", "") }
         return xml("TEI") {
             prologNodes("medieval-manuscript")
             xmlns = "http://www.tei-c.org/ns/1.0"
@@ -178,7 +178,13 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             "l" {
                                 attribute("xml:id", "og-mhg-$chapter-$lineNo")
                                 attribute("n", lineNo)
-                                unsafeText(line.replace("&nbsp;", " "))
+                                unsafeText(
+                                    line
+                                        .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                        .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                        .convertHorizontalSpace()
+                                        .trim()
+                                )
                             }
                         }
                     }
@@ -208,7 +214,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             attribute("facs", "#s${entryCounter.getAndIncrement()}")
                             attribute("n", folioNr)
                         }
-                        //                                    metadataCommentNodes(entry)
                         val textLayer = entry.parallelTexts["Reconstructie"]!!
                         textLayer.text.split("<br>").forEach { line ->
                             val lineNo = lineCounter.getAndIncrement()
@@ -216,7 +221,13 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                                 attribute("xml:id", "og-dum-$chapter-$lineNo")
                                 attribute("n", lineNo)
                                 attribute("corresp", "#ogb-mgh-$chapter-$lineNo")
-                                unsafeText(line.replace("&nbsp;", " "))
+                                unsafeText(
+                                    line
+                                        .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                        .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                        .convertHorizontalSpace()
+                                        .trim()
+                                )
                             }
                         }
                     }
@@ -246,14 +257,19 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             attribute("facs", "#s${entryCounter.getAndIncrement()}")
                             attribute("n", folioNr)
                         }
-                        //                                    metadataCommentNodes(entry)
                         val textLayer = entry.parallelTexts["Vertaling"]!!
                         textLayer.text.split("<br><br>").forEach { line ->
                             val parNo = parCounter.getAndIncrement()
                             "p" {
                                 attribute("xml:id", "og-de-$chapter-$parNo")
                                 attribute("n", parNo)
-                                unsafeText(line.replace("&nbsp;", " ").replace("<br>", ""))
+                                unsafeText(
+                                    line
+                                        .replace("<br>", "")
+                                        .replace("&nbsp;", " ")
+                                        .trim()
+
+                                )
                             }
                         }
                     }
@@ -706,17 +722,24 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         )
 
         fun horizontalSpaceTag(quantity: Int): String =
-            "<space dim=\"horizontal\" unit=\"chars\" quantity=\"$quantity\"/>"
+            when (quantity) {
+                1 -> " "
+                else -> """<space dim="horizontal" unit="chars" quantity="$quantity"/>"""
+            }
 
-        val regex = "(?:<nbsp/>)+".toRegex()
+        val NBSP_MILESTONE_REGEX = "(?:<nbsp/>)+".toRegex()
+        val NBSP_ENTITY_REGEX = "(?:&nbsp;)+".toRegex()
 
-        //    fun String.convertHorizontalSpace(): String =
-        //        this.replace("<nbsp/>", " ")
-        fun String.convertHorizontalSpace(): String =
-            regex.replace(this) { matchResult ->
+        fun String.convertHorizontalSpace(): String {
+            val intermediate = NBSP_MILESTONE_REGEX.replace(this) { matchResult ->
                 val count = matchResult.value.length / "<nbsp/>".length
                 horizontalSpaceTag(count)
             }
+            return NBSP_ENTITY_REGEX.replace(intermediate) { matchResult ->
+                val count = matchResult.value.length / "&nbsp;".length
+                horizontalSpaceTag(count)
+            }
+        }
 
         private fun String.removeLineBreaks(): String =
             this.replace(Regex("<lb n=\"\\d+\"/>\n"), "")
