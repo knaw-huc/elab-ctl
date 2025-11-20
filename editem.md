@@ -182,3 +182,27 @@ Deze conversie aanvullingen komen er nog aan:
 
 > of de annotaties van ‘Persoon waaraan gerefereerd wordt’ en ‘Publicatie waaraan gerefereerd wordt’ kunnen worden opgelost met een 'ref' naar een externe XML bestand (bio.xml of biblio.xml)
 
+---
+
+# brieven-correspondenten-1900
+
+- brievenproject
+- externe metadata uit timbuctoo
+- externe bestanden uit wordpress
+- manifests
+
+# clusiuscorrespondence
+
+- brievenproject
+- externe bestanden uit wordpress
+
+# correspondentie-bolland-en-cosijn
+
+- brievenproject
+- externe bestanden uit wordpress
+
+# ogier
+
+- manuscriptproject
+- externe bestanden uit wordpress
+- manifest

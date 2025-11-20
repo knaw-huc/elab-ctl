@@ -22,7 +22,10 @@ object ManifestGenerator {
     @OptIn(ExperimentalSerializationApi::class)
     fun generateFrom(zipPath: String, warPath: String, mode: Mode) {
 //        val projectName = "brieven-correspondenten-1900"
-        val projectName = warPath.split('/').last().replace("elab4-", "").replace(".war", "")
+        val projectName = warPath.split('/')
+            .last()
+            .replace("elab4-", "")
+            .replace(".war", "")
         val elabConfig: EditionConfig = ZipFile(warPath).use { zip ->
             val elabConfigEntry = zip.getEntry("data/config.json")
             zip.getInputStream(elabConfigEntry).use { input ->

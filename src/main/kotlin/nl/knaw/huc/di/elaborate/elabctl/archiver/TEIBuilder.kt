@@ -67,6 +67,10 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     fun manuscriptToTEI(entries: List<Entry>, projectName: String): String {
+        val entryCounter = AtomicInt(1)
+        val manuscriptEntries = entries
+            .map { it.toManuscriptEntry("s" + entryCounter.getAndIncrement()) }
+            .flatMap { it.splitOnChapterHeading() }
         val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Hoofdstuknummer"]!!.replace(" ", "") }
         return xml("TEI") {
             prologNodes("medieval-manuscript")
@@ -150,6 +154,47 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             }
 
         }.toString(printOptions = printOptions)
+    }
+
+    data class ManuscriptEntry(
+        val id: String,
+        val folioNr: String,
+        val facsRef: String,
+        val originalLines: List<String>,
+        val translationLines: List<String>,
+        val translationUnalignedLines: List<String>,
+    )
+
+    fun Entry.toManuscriptEntry(facsRef: String): ManuscriptEntry {
+        val metadata = metadata.asMap()
+        val folioNr = metadata["Folionummer"]!!
+        val originalLines = parallelTexts["Transcriptie"]!!.text.split("<br>")
+        val translationLines = parallelTexts["Reconstructie"]!!.text.split("<br>")
+        val translationUnalignedParagraphs = parallelTexts["Vertaling"]!!.text.split("<br><br>")
+        return ManuscriptEntry(
+            id.toString(),
+            folioNr,
+            facsRef,
+            originalLines,
+            translationLines,
+            translationUnalignedParagraphs
+        )
+    }
+
+    private fun ManuscriptEntry.splitOnChapterHeading(): List<ManuscriptEntry> {
+        val predicate = { s: String -> s.contains("Hoofdstuknummer") }
+        val segmentedOriginalLines = originalLines.splitOn(predicate)
+        val segmentedTranslationLines = translationLines.splitOn(predicate)
+        val segmentedTranslationUnalignedParagraphs = translationLines.splitOn(predicate)
+        assert(segmentedOriginalLines.size == segmentedTranslationLines.size)
+        assert(segmentedTranslationLines.size == segmentedTranslationUnalignedParagraphs.size)
+        return IntRange(1, segmentedTranslationLines.size).map { i ->
+            copy(
+                originalLines = segmentedOriginalLines[i],
+                translationLines = segmentedTranslationLines[i],
+                translationUnalignedLines = segmentedTranslationUnalignedParagraphs[i]
+            )
+        }
     }
 
     private fun Node.manuscriptOriginalDivNode(entriesPerChapter: Map<String, List<Entry>>) {

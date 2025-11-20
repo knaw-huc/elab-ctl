@@ -12,3 +12,20 @@ fun String.asIsoLang() =
         contains("Unknown") || contains("Onbekend") -> "XX"
         else -> "nl"
     }
+
+fun <T> List<T>.splitOn(predicate: (T) -> Boolean): List<List<T>> {
+    val containers = mutableListOf<MutableList<T>>()
+    var container = mutableListOf<T>()
+    forEach {
+        if (predicate(it)) {
+            if (container.isNotEmpty()) {
+                containers.add(container)
+                container = mutableListOf()
+            }
+        }
+        container.add(it)
+    }
+    containers.add(container)
+    return containers
+}
+
