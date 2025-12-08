@@ -5,6 +5,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URLDecoder
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -31,7 +32,6 @@ object Archiver {
         "letters",
         "manuscript",
         "book",
-        "sections",
     )
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -300,7 +300,7 @@ object Archiver {
                 })
 
 //                logger.info { entry.metadata }
-                val (tei, teiPath) = buildLetterTei(teiBuilder, projectName, entry, teiName)
+                val (tei, teiPath, xiRefs) = buildLetterTei(teiBuilder, projectName, entry, teiName, AtomicInteger(1))
                 exportTei(tei, teiPath, errors)
             }
     }
@@ -351,6 +351,10 @@ object Archiver {
         projectName: String,
         errors: MutableList<String>,
     ) {
+        val allSurfaceRefs = mutableListOf<TEIBuilder.XIncludeRef>()
+        val allDivRefs = mutableListOf<TEIBuilder.XIncludeRef>()
+        val allNoteRefs = mutableListOf<TEIBuilder.XIncludeRef>()
+        val facsimileCounter = AtomicInteger(1)
         entryDescriptions
 //                .take(1)
             .forEachIndexed { i, entryDescription ->
@@ -373,20 +377,33 @@ object Archiver {
                 })
 
 //                logger.info { entry.metadata }
-                val (tei, teiPath) = buildLetterTei(teiBuilder, projectName, entry, teiName)
+                val (tei, teiPath, xiRefs: XIRefs) = buildLetterTei(
+                    teiBuilder,
+                    projectName,
+                    entry,
+                    teiName,
+                    facsimileCounter
+                )
                 val sectionPath = teiPath.replace("letters", "book")
+                allSurfaceRefs.addAll(xiRefs.surfaceRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
+                allDivRefs.addAll(xiRefs.divRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
+                allNoteRefs.addAll(xiRefs.noteRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
                 exportTei(tei, sectionPath, errors)
             }
 
         val (tei, teiPath) = buildBookTei(
             teiBuilder = teiBuilder,
             projectName = projectName,
-            surfaceRefs = listOf (),
-            divRefs = listOf(),
-            noteRefs = listOf(),
+            xiRefs = XIRefs(allSurfaceRefs, allDivRefs, allNoteRefs),
         )
         exportTei(tei, teiPath, errors)
     }
+
+    data class XIRefs(
+        val surfaceRefs: List<TEIBuilder.XIncludeRef>,
+        val divRefs: List<TEIBuilder.XIncludeRef>,
+        val noteRefs: List<TEIBuilder.XIncludeRef>,
+    )
 
 //    private fun convertBookProject0(
 //        entryDescriptions: ArrayList<EntryDescription>,
@@ -452,11 +469,12 @@ object Archiver {
         teiBuilder: TEIBuilder,
         projectName: String,
         entry: Entry,
-        teiName: String
-    ): Pair<String, String> {
-        val tei = teiBuilder.entryToTEI(entry, teiName)
+        teiName: String,
+        facsimileCounter: AtomicInteger
+    ): Triple<String, String, XIRefs> {
+        val (tei, xiRefs) = teiBuilder.entryToTEI(entry, teiName, facsimileCounter)
         val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
-        return Pair(tei, teiPath)
+        return Triple(tei, teiPath, xiRefs)
     }
 
     private fun buildManuscriptTei(
@@ -474,15 +492,11 @@ object Archiver {
     private fun buildBookTei(
         teiBuilder: TEIBuilder,
         projectName: String,
-        surfaceRefs: List<TEIBuilder.XIncludeRef>,
-        divRefs: List<TEIBuilder.XIncludeRef>,
-        noteRefs: List<TEIBuilder.XIncludeRef>,
+        xiRefs: XIRefs
     ): Pair<String, String> {
         val tei = teiBuilder.bookMainToTEI(
             projectName = projectName,
-            surfaceRefs = surfaceRefs,
-            divRefs = divRefs,
-            noteRefs = noteRefs,
+            xiRefs = xiRefs,
         )
         val teiPath = "build/zip/$projectName/book/main.xml"
         return Pair(tei, teiPath)

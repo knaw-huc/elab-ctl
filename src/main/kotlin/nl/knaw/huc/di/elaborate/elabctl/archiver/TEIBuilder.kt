@@ -2,6 +2,7 @@ package nl.knaw.huc.di.elaborate.elabctl.archiver
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 import kotlin.io.path.inputStream
 import arrow.atomic.AtomicInt
@@ -33,8 +34,9 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
     fun entryToTEI(
         entry: Entry,
-        teiName: String
-    ): String {
+        teiName: String,
+        facsimileCounter: AtomicInteger
+    ): Pair<String, Archiver.XIRefs> {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
         val metadataMap = entry.metadata.associate { it.field to it.value }
@@ -45,7 +47,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         val editorUrl = conversionConfig.editor.url
 
         val letterMetadata = conversionConfig.letterMetadata!!
-        return xml("TEI") {
+        var noteRefs = emptyList<XIncludeRef>()
+        val tei = xml("TEI") {
             prologNodes("letter")
             xmlns = "http://www.tei-c.org/ns/1.0"
 //            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
@@ -60,11 +63,14 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 metadataMap,
                 letterMetadata
             )
-            facsimileNode(listOf(entry), teiName)
+            facsimileNode(listOf(entry), teiName, facsimileCounter)
             metadataCommentNodes(entry)
             val annotationMap: MutableMap<Long, AnnotationData> = textNode(entry, metadataMap, letterMetadata)
+            noteRefs = annotationMap.keys.map { "note_$it" }.map { XIncludeRef("", it) }
             standOffNode(annotationMap)
         }.toString(printOptions = printOptions)
+        val xiRefs = Archiver.XIRefs(emptyList(), emptyList(), noteRefs)
+        return Pair(tei, xiRefs)
     }
 
     fun manuscriptToTEI(entries: List<Entry>, projectName: String): String {
@@ -143,7 +149,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 //                    }
 //                }
             }
-            facsimileNode(entries, projectName)
+            facsimileNode(entries, projectName, AtomicInteger(1))
             "text" {
                 attribute("xml:id", "og")
                 "body" {
@@ -207,7 +213,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     }
                 }
             }
-            facsimileNode(entries, projectName)
+            facsimileNode(entries, projectName, AtomicInteger(1))
             "text" {
                 attribute("xml:id", "og")
                 "body" {
@@ -219,9 +225,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
     fun bookMainToTEI(
         projectName: String,
-        surfaceRefs: List<XIncludeRef>,
-        divRefs: List<XIncludeRef>,
-        noteRefs: List<XIncludeRef>
+        xiRefs: Archiver.XIRefs,
     ): String {
         val title = conversionConfig.title
         val editorName = conversionConfig.editor.name
@@ -280,18 +284,18 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     }
                 }
             }
-            "facsimile" { xIncludes(surfaceRefs) }
+            "facsimile" { xIncludes(xiRefs.surfaceRefs) }
             "text" {
                 attribute("xml:id", "og")
                 "body" {
                     attribute("divRole", "doc-sections")
-                    xIncludes(divRefs)
+                    xIncludes(xiRefs.divRefs)
                 }
             }
             "standOff" {
                 "listAnnotation" {
                     attribute("type", "notes")
-                    xIncludes(noteRefs)
+                    xIncludes(xiRefs.noteRefs)
                 }
             }
         }.toString(printOptions = printOptions)
@@ -644,15 +648,17 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
     private fun Node.facsimileNode(
         entries: List<Entry>,
-        baseName: String
+        baseName: String,
+        facsimileCounter: AtomicInteger
     ) {
         val facsimiles = entries.flatMap { it.facsimiles }
         if (facsimiles.isNotEmpty()) {
             "facsimile" {
                 facsimiles.forEachIndexed { i, facs ->
+                    val n = facsimileCounter.getAndIncrement()
                     "surface" {
-                        attribute("n", "${i + 1}")
-                        attribute("xml:id", "s${i + 1}")
+                        attribute("n", n)
+                        attribute("xml:id", "s$n")
                         if (facs.title.isNotEmpty() && facs.title != "facsimile") {
                             comment(facs.title)
                         }
