@@ -5,7 +5,7 @@ editor:
   id: "hg"
   name: "Henna Goudzand"
   url: "https://viaf.org/viaf/22462628"
-divRole: ""
+divRole: "doc-sections"
 pageBreakEncoding: pageBreakMarker
 letterDates:
   earliestYear: 1900

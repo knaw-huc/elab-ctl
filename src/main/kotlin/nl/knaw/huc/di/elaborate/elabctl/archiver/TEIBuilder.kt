@@ -53,7 +53,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         val startDivCount = divCounter.get()
         val startFacsCount = facsimileCounter.get()
         val tei = xml("TEI") {
-            prologNodes("letter")
+            prologNodes("book")
             xmlns = "http://www.tei-c.org/ns/1.0"
 //            namespace("ed", "http://xmlschema.huygens.knaw.nl/ns/editem") // TODO: make conditional
             teiHeaderNode(
@@ -708,7 +708,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                     .forEach { (layerName, textLayer) ->
                         val divId = "div.${divCounter.getAndIncrement()}"
-                        val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
+//                        val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
+                        val divType = "original"
                         val lang = when {
                             (divType == "translation") -> "nl"
                             else -> (metadataMap[letterMetadata.language])?.asIsoLang() ?: "nl"
@@ -754,12 +755,13 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 "listAnnotation" {
                     attribute("type", "notes")
                     annotationMap.forEach { (id, data) ->
-                        val noteText = data.text.ifEmpty { data.annotatedText }
+                        val noteContent = data.text.ifEmpty { data.annotatedText }
+                        val noteText = AnnotationBodyConverter.convert(noteContent)
                         "note" {
                             attribute("xml:id", "note_$id")
                             attribute("n", noteCounter.andIncrement)
                             comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
-                            "p" { -noteText }
+                            "p" { unsafeText(noteText) }
                         }
                     }
                 }
@@ -978,7 +980,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     fun String.addPageBreaks(divType: String, lang: String, sectionId: Int): String =
         pbRegex.replace(this) { matchResult ->
             val number = matchResult.groupValues[1]
-            "<pb xml:id=\"pb.$sectionId.$divType.$lang.$number\" f=\"$number\" facs=\"#s$number\" n=\"$number\"/>"
+            "<pb xml:id=\"pb.$sectionId.$divType.$lang.$number\" facs=\"#s$number\" n=\"$number\"/>"
         }
 
     companion object {

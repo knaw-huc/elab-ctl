@@ -376,7 +376,7 @@ object Archiver {
 //            .forEachIndexed { i, entryDescription ->
                 logger.info { "entry ${i + 1} / $total..." }
 //                logger.info { entryDescription }
-                logger.info { entry }
+//                logger.info { entry }
                 val teiName =
                     teiName(entryTypeName, i + 1, entry.name.lowercase()).replace(
                         "entry",
@@ -401,7 +401,7 @@ object Archiver {
                     teiName,
                     facsimileCounter,
                     divCounter,
-                    i
+                    i+1
                 )
                 val sectionPath = teiPath.replace("letters", "book")
                 allSurfaceRefs.addAll(xiRefs.surfaceRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })

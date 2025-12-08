@@ -121,8 +121,8 @@ browse-ogier:
 anton-de-kom:
 	./bin/elabctl archive ./data/elab4-$(ADK).war
 	echo "validating tei export..."
-	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(ADK)/schema/editem-book.rng build/zip/elab4-$(ADK)/book/*.xml >> out/xml-validate.log
-	less out/xml-validate.log
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(ADK)/schema/editem-book.rng build/zip/elab4-$(ADK)/book/section*.xml > out/xml-validate.log
+	bat out/xml-validate.log
 
 .PHONY: anton-de-kom-rsync
 anton-de-kom-rsync:
