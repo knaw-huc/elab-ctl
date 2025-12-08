@@ -300,7 +300,15 @@ object Archiver {
                 })
 
 //                logger.info { entry.metadata }
-                val (tei, teiPath, xiRefs) = buildLetterTei(teiBuilder, projectName, entry, teiName, AtomicInteger(1))
+                val (tei, teiPath, xiRefs) = buildLetterTei(
+                    teiBuilder,
+                    projectName,
+                    entry,
+                    teiName,
+                    AtomicInteger(1),
+                    AtomicInteger(1),
+                    i
+                )
                 exportTei(tei, teiPath, errors)
             }
     }
@@ -355,17 +363,26 @@ object Archiver {
         val allDivRefs = mutableListOf<TEIBuilder.XIncludeRef>()
         val allNoteRefs = mutableListOf<TEIBuilder.XIncludeRef>()
         val facsimileCounter = AtomicInteger(1)
+        val divCounter = AtomicInteger(1)
         entryDescriptions
-//                .take(1)
-            .forEachIndexed { i, entryDescription ->
+            .map { loadEntry(zip, it) }
+            .sortedBy { it.metadata[0].value }
+            .forEachIndexed { i, entry ->
+
+//            }
+//
+//        entryDescriptions
+////                .take(1)
+//            .forEachIndexed { i, entryDescription ->
                 logger.info { "entry ${i + 1} / $total..." }
-                logger.info { entryDescription }
+//                logger.info { entryDescription }
+                logger.info { entry }
                 val teiName =
-                    teiName(entryTypeName, i + 1, entryDescription.name.lowercase()).replace(
+                    teiName(entryTypeName, i + 1, entry.name.lowercase()).replace(
                         "entry",
                         "section"
                     )
-                val entry = loadEntry(zip, entryDescription)
+//                val entry = loadEntry(zip, entryDescription)
                 report.addEntry(entry, teiName)
 
                 processFacsimiles(teiName, entry.facsimiles, scriptLines)
@@ -382,7 +399,9 @@ object Archiver {
                     projectName,
                     entry,
                     teiName,
-                    facsimileCounter
+                    facsimileCounter,
+                    divCounter,
+                    i
                 )
                 val sectionPath = teiPath.replace("letters", "book")
                 allSurfaceRefs.addAll(xiRefs.surfaceRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
@@ -450,11 +469,11 @@ object Archiver {
 ////        exportMainTei(mainTEIPath)
 //    }
 
-    private fun exportMainTei(teiPath: String, tei: String) {
-        logger.info { "=> $teiPath" }
-        Path(teiPath).writeText(tei)
-        logger.info { "" }
-    }
+//    private fun exportMainTei(teiPath: String, tei: String) {
+//        logger.info { "=> $teiPath" }
+//        Path(teiPath).writeText(tei)
+//        logger.info { "" }
+//    }
 
     private fun exportTei(tei: String, teiPath: String, errors: MutableList<String>) {
         if (!tei.isWellFormed()) {
@@ -470,9 +489,11 @@ object Archiver {
         projectName: String,
         entry: Entry,
         teiName: String,
-        facsimileCounter: AtomicInteger
+        facsimileCounter: AtomicInteger,
+        divCounter: AtomicInteger,
+        sectionId: Int
     ): Triple<String, String, XIRefs> {
-        val (tei, xiRefs) = teiBuilder.entryToTEI(entry, teiName, facsimileCounter)
+        val (tei, xiRefs) = teiBuilder.entryToTEI(entry, teiName, facsimileCounter, divCounter, sectionId)
         val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
         return Triple(tei, teiPath, xiRefs)
     }

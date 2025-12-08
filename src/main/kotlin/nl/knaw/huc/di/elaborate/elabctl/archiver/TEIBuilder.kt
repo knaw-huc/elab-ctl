@@ -35,7 +35,9 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     fun entryToTEI(
         entry: Entry,
         teiName: String,
-        facsimileCounter: AtomicInteger
+        facsimileCounter: AtomicInteger,
+        divCounter: AtomicInteger,
+        sectionId: Int
     ): Pair<String, Archiver.XIRefs> {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDateTime.now().format(formatter)
@@ -48,6 +50,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 
         val letterMetadata = conversionConfig.letterMetadata!!
         var noteRefs = emptyList<XIncludeRef>()
+        val startDivCount = divCounter.get()
+        val startFacsCount = facsimileCounter.get()
         val tei = xml("TEI") {
             prologNodes("letter")
             xmlns = "http://www.tei-c.org/ns/1.0"
@@ -65,11 +69,21 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             )
             facsimileNode(listOf(entry), teiName, facsimileCounter)
             metadataCommentNodes(entry)
-            val annotationMap: MutableMap<Long, AnnotationData> = textNode(entry, metadataMap, letterMetadata)
+            val annotationMap: MutableMap<Long, AnnotationData> = textNode(
+                entry,
+                metadataMap,
+                letterMetadata,
+                divCounter,
+                sectionId
+            )
             noteRefs = annotationMap.keys.map { "note_$it" }.map { XIncludeRef("", it) }
             standOffNode(annotationMap)
         }.toString(printOptions = printOptions)
-        val xiRefs = Archiver.XIRefs(emptyList(), emptyList(), noteRefs)
+        val xiRefs = Archiver.XIRefs(
+            (startFacsCount..<facsimileCounter.get()).map { XIncludeRef("", "s$it") },
+            (startDivCount..<divCounter.get()).map { XIncludeRef("", "div.$it") },
+            noteRefs
+        )
         return Pair(tei, xiRefs)
     }
 
@@ -680,7 +694,9 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     private fun Node.textNode(
         entry: Entry,
         metadataMap: Map<String, String>,
-        letterMetadata: LetterMetadataConfig
+        letterMetadata: LetterMetadataConfig,
+        divCounter: AtomicInteger,
+        sectionId: Int
     ): MutableMap<Long, AnnotationData> {
         val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
         "text" {
@@ -691,6 +707,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     .toSortedMap()
                     //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                     .forEach { (layerName, textLayer) ->
+                        val divId = "div.${divCounter.getAndIncrement()}"
                         val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
                         val lang = when {
                             (divType == "translation") -> "nl"
@@ -699,18 +716,21 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                         val layerAnnotationMap = textLayer.annotationData.associateBy { it.n }
                         annotationMap.putAll(layerAnnotationMap.filter { !annoNumToRefTarget.contains(it.key.toString()) })
                         val text = textLayer.text
+                            .replace("<b>", "")
+                            .replace("</b>", "")
                             .transform(layerAnnotationMap, annoNumToRefTarget)
                             .removeLineBreaks()
                             .convertVerticalSpace()
                             .convertHorizontalSpace()
                             .setParagraphs(divType, lang)
-                            .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding)
+                            .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding, sectionId)
                             //                                .wrapLines(80)
                             .wrapSpaceElementWithNewLines()
                             .replace("\n\n\n", "\n\n")
                         "div" {
                             attribute("type", divType)
                             attribute("xml:lang", lang)
+                            attribute("xml:id", divId)
                             -"\n"
                             if (text.contains("</p>")) {
                                 unsafeText(text)
@@ -924,7 +944,12 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 //            }
 //    }
 
-    private fun String.setPageBreaks(divType: String, lang: String, pageBreakEncoding: PageBreakEncoding): String =
+    private fun String.setPageBreaks(
+        divType: String,
+        lang: String,
+        pageBreakEncoding: PageBreakEncoding,
+        sectionId: Int
+    ): String =
         when (pageBreakEncoding) {
             PageBreakEncoding.PILCROW -> this
                 .replace("""<hi rend="bold">$ENCODED_PAGE_BREAK</hi>""", ENCODED_PAGE_BREAK)
@@ -933,7 +958,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     if (i == 0) {
                         t
                     } else {
-                        "\n<pb xml:id=\"pb.$divType.$lang.$i\" f=\"$i\" facs=\"#s$i\" n=\"$i\"/>\n$t"
+                        "\n<pb xml:id=\"pb.$sectionId.$divType.$lang.$i\" f=\"$i\" facs=\"#s$i\" n=\"$i\"/>\n$t"
                     }
                 }
                 .joinToString("")
@@ -943,17 +968,17 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 if (!this.contains("[1]")) {
                     str = "[1]$str"
                 }
-                str.addPageBreaks(divType, lang)
+                str.addPageBreaks(divType, lang, sectionId)
             }
 
             PageBreakEncoding.NONE -> this
         }
 
     val pbRegex = Regex("\\[(\\d+)]")
-    fun String.addPageBreaks(divType: String, lang: String): String =
+    fun String.addPageBreaks(divType: String, lang: String, sectionId: Int): String =
         pbRegex.replace(this) { matchResult ->
             val number = matchResult.groupValues[1]
-            "<pb xml:id=\"pb.$divType.$lang.$number\" f=\"$number\" facs=\"#s$number\" n=\"$number\"/>"
+            "<pb xml:id=\"pb.$sectionId.$divType.$lang.$number\" f=\"$number\" facs=\"#s$number\" n=\"$number\"/>"
         }
 
     companion object {
