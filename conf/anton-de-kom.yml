@@ -1,9 +1,23 @@
 projectName: "anton-de-kom"
-title: "Anton de Kom: Wij slaven van Suriname"
-type: manuscript
+title: "Wij slaven van Suriname"
+type: book
 editor:
   id: "hg"
   name: "Henna Goudzand"
   url: "https://viaf.org/viaf/22462628"
 divRole: ""
-pageBreakEncoding: none
+pageBreakEncoding: pageBreakMarker
+letterDates:
+  earliestYear: 1900
+  latestYear: 2000
+letterMetadata:
+  sender: "Sender"
+  senderPlace: "Place"
+  recipient: ""
+  recipientPlace: null
+  date: ""
+  language: ""
+  idno: null
+  settlement: null
+  institution: null
+  collection: null

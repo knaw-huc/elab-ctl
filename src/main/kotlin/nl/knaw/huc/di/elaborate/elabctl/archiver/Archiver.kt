@@ -25,6 +25,15 @@ object Archiver {
 
     val json = Json { ignoreUnknownKeys = true }
 
+    val teiParts = listOf(
+        "about",
+        "apparatus",
+        "letters",
+        "manuscript",
+        "book",
+        "sections",
+    )
+
     @OptIn(ExperimentalSerializationApi::class)
     fun archive(warPaths: List<String>) {
         val errors: MutableList<String> = mutableListOf()
@@ -37,12 +46,12 @@ object Archiver {
             )
             val conversionConfig = loadConfig(projectConfig.projectName)
             val teiBuilder = TEIBuilder(projectConfig, conversionConfig)
-            File("build/zip/$projectName/letters").deleteRecursively()
-            File("build/zip/$projectName/manuscript").deleteRecursively()
-            File("build/zip/$projectName/about").deleteRecursively()
-            File("build/zip/$projectName/letters").mkdirs()
-            File("build/zip/$projectName/manuscript").mkdirs()
-            File("build/zip/$projectName/about").mkdirs()
+            for (part in teiParts) {
+                File("build/zip/$projectName/$part").apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+            }
             File("out").mkdirs()
             logger.info { "<= $warPath" }
             val facsimilePaths = mutableListOf<String>()
@@ -86,6 +95,19 @@ object Archiver {
                         teiBuilder,
                         projectName,
                         errors
+                    )
+
+                    ProjectType.BOOK -> convertBookProject(
+                        entries,
+                        total,
+                        entryTypeName,
+                        zip,
+                        report,
+                        scriptLines,
+                        facsimilePaths,
+                        teiBuilder,
+                        projectName,
+                        errors,
                     )
 
                 }
@@ -257,7 +279,7 @@ object Archiver {
         facsimilePaths: MutableList<String>,
         teiBuilder: TEIBuilder,
         projectName: String,
-        errors: MutableList<String>
+        errors: MutableList<String>,
     ) {
         entryDescriptions
 //                .take(1)
@@ -265,7 +287,7 @@ object Archiver {
                 logger.info { "entry ${i + 1} / $total..." }
                 logger.info { entryDescription }
                 val teiName =
-                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                    teiName(entryTypeName, i + 1, entryDescription.name.lowercase())
                 val entry = loadEntry(zip, entryDescription)
                 report.addEntry(entry, teiName)
 
@@ -278,14 +300,8 @@ object Archiver {
                 })
 
 //                logger.info { entry.metadata }
-                val tei = teiBuilder.entryToTEI(entry, teiName)
-                val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
-                if (!tei.isWellFormed()) {
-                    errors.add("file $teiPath is NOT well-formed!")
-                }
-                logger.info { "=> $teiPath" }
-                Path(teiPath).writeText(tei)
-                logger.info { "" }
+                val (tei, teiPath) = buildLetterTei(teiBuilder, projectName, entry, teiName)
+                exportTei(tei, teiPath, errors)
             }
     }
 
@@ -307,7 +323,44 @@ object Archiver {
                 logger.info { "entry ${i + 1} / $total..." }
                 logger.info { entryDescription }
                 val teiName =
-                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                    teiName(entryTypeName, i + 1, entryDescription.name)
+                val entry = loadEntry(zip, entryDescription)
+                report.addEntry(entry, teiName)
+
+                processFacsimiles(teiName, entry.facsimiles, scriptLines)
+                facsimilePaths.addAll(entry.facsimiles.map {
+                    it.thumbnail.replace(
+                        "http.*/jp2/".toRegex(),
+                        ""
+                    )
+                })
+            }
+        val (tei, teiPath) = buildManuscriptTei(teiBuilder, projectName, entryDescriptions, zip)
+        exportTei(tei, teiPath, errors)
+    }
+
+    private fun convertBookProject(
+        entryDescriptions: ArrayList<EntryDescription>,
+        total: Int,
+        entryTypeName: String,
+        zip: ZipFile,
+        report: ConversionReporter,
+        scriptLines: MutableList<String>,
+        facsimilePaths: MutableList<String>,
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        errors: MutableList<String>,
+    ) {
+        entryDescriptions
+//                .take(1)
+            .forEachIndexed { i, entryDescription ->
+                logger.info { "entry ${i + 1} / $total..." }
+                logger.info { entryDescription }
+                val teiName =
+                    teiName(entryTypeName, i + 1, entryDescription.name.lowercase()).replace(
+                        "entry",
+                        "section"
+                    )
                 val entry = loadEntry(zip, entryDescription)
                 report.addEntry(entry, teiName)
 
@@ -320,16 +373,132 @@ object Archiver {
                 })
 
 //                logger.info { entry.metadata }
+                val (tei, teiPath) = buildLetterTei(teiBuilder, projectName, entry, teiName)
+                val sectionPath = teiPath.replace("letters", "book")
+                exportTei(tei, sectionPath, errors)
             }
-        val shortName = projectName.substringAfter("elab4-")
-        val tei = teiBuilder.manuscriptToTEI(entryDescriptions.map { loadEntry(zip, it) }, shortName)
-        val teiPath = "build/zip/$projectName/manuscript/${shortName}.xml"
+
+        val (tei, teiPath) = buildBookTei(
+            teiBuilder = teiBuilder,
+            projectName = projectName,
+            surfaceRefs = listOf (),
+            divRefs = listOf(),
+            noteRefs = listOf(),
+        )
+        exportTei(tei, teiPath, errors)
+    }
+
+//    private fun convertBookProject0(
+//        entryDescriptions: ArrayList<EntryDescription>,
+//        total: Int,
+//        entryTypeName: String,
+//        zip: ZipFile,
+//        report: ConversionReporter,
+//        scriptLines: MutableList<String>,
+//        facsimilePaths: MutableList<String>,
+//        teiBuilder: TEIBuilder,
+//        projectName: String,
+//        errors: MutableList<String>
+//    ) {
+//        entryDescriptions
+////                .take(1)
+//            .forEachIndexed { i, entryDescription ->
+//                logger.info { "entry ${i + 1} / $total..." }
+//                logger.info { entryDescription }
+//                val teiName =
+//                    teiName(entryTypeName, i + 1, entryDescription.name).replace("entry", "section")
+//                val entry = loadEntry(zip, entryDescription)
+//                report.addEntry(entry, teiName)
+//
+//                processFacsimiles(teiName, entry.facsimiles, scriptLines)
+//                facsimilePaths.addAll(entry.facsimiles.map {
+//                    it.thumbnail.replace(
+//                        "http.*/jp2/".toRegex(),
+//                        ""
+//                    )
+//                })
+//            }
+//        val (tei, teiPath) = buildBookTei(
+//            teiBuilder = teiBuilder,
+//            projectName = projectName,
+//            title = "Wij Slaven van Suriname",
+//            surfaceRefs = listOf(),
+//            divRefs = listOf(),
+//            noteRefs = listOf(),
+//            editorId = TODO(),
+//            editorName = TODO(),
+//            editorUrl = TODO(),
+//        )
+//        exportTei(tei, teiPath, errors)
+////        exportMainTei(mainTEIPath)
+//    }
+
+    private fun exportMainTei(teiPath: String, tei: String) {
+        logger.info { "=> $teiPath" }
+        Path(teiPath).writeText(tei)
+        logger.info { "" }
+    }
+
+    private fun exportTei(tei: String, teiPath: String, errors: MutableList<String>) {
         if (!tei.isWellFormed()) {
             errors.add("file $teiPath is NOT well-formed!")
         }
         logger.info { "=> $teiPath" }
         Path(teiPath).writeText(tei)
         logger.info { "" }
+    }
+
+    private fun buildLetterTei(
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        entry: Entry,
+        teiName: String
+    ): Pair<String, String> {
+        val tei = teiBuilder.entryToTEI(entry, teiName)
+        val teiPath = "build/zip/$projectName/letters/${teiName}.xml"
+        return Pair(tei, teiPath)
+    }
+
+    private fun buildManuscriptTei(
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        entryDescriptions: ArrayList<EntryDescription>,
+        zip: ZipFile
+    ): Pair<String, String> {
+        val shortName = projectName.substringAfter("elab4-")
+        val tei = teiBuilder.manuscriptToTEI(entryDescriptions.map { loadEntry(zip, it) }, shortName)
+        val teiPath = "build/zip/$projectName/manuscript/${shortName}.xml"
+        return Pair(tei, teiPath)
+    }
+
+    private fun buildBookTei(
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        surfaceRefs: List<TEIBuilder.XIncludeRef>,
+        divRefs: List<TEIBuilder.XIncludeRef>,
+        noteRefs: List<TEIBuilder.XIncludeRef>,
+    ): Pair<String, String> {
+        val tei = teiBuilder.bookMainToTEI(
+            projectName = projectName,
+            surfaceRefs = surfaceRefs,
+            divRefs = divRefs,
+            noteRefs = noteRefs,
+        )
+        val teiPath = "build/zip/$projectName/book/main.xml"
+        return Pair(tei, teiPath)
+    }
+
+    private fun buildBookTei0(
+        teiBuilder: TEIBuilder,
+        projectName: String,
+        entryDescriptions: ArrayList<EntryDescription>,
+        zip: ZipFile
+    ): Pair<String, String> {
+        val shortName = projectName.substringAfter("elab4-")
+        val tei = teiBuilder.bookToTEI(entryDescriptions.map { loadEntry(zip, it) }, shortName)
+
+        val teiPath = "build/zip/$projectName/book/${shortName}.xml"
+        return Pair(tei, teiPath)
     }
 
     // TODO:

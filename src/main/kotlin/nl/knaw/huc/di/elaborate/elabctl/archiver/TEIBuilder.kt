@@ -7,6 +7,7 @@ import kotlin.io.path.inputStream
 import arrow.atomic.AtomicInt
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
+import org.redundent.kotlin.xml.Namespace
 import org.redundent.kotlin.xml.Node
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.XmlVersion
@@ -71,7 +72,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         val manuscriptEntries = entries
             .map { it.toManuscriptEntry("s" + entryCounter.getAndIncrement()) }
             .flatMap { it.splitOnChapterHeading() }
-        val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Hoofdstuknummer"]!!.replace(" ", "") }
+        val entriesPerChapter = entries.groupBy { it.metadata.asMap()["Bladzijde(n)"]!!.replace(" ", "") }
         return xml("TEI") {
             prologNodes("medieval-manuscript")
             xmlns = "http://www.tei-c.org/ns/1.0"
@@ -146,15 +147,172 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             "text" {
                 attribute("xml:id", "og")
                 "body" {
-                    attribute("divRole", "original-translation")
+                    attribute("divRole", "original")
                     manuscriptOriginalDivNode(entriesPerChapter)
-                    manuscriptTranslationDivNode(entriesPerChapter)
-                    manuscriptTranslationUnalignedDivNode(entriesPerChapter)
+//                    manuscriptTranslationDivNode(entriesPerChapter)
+//                    manuscriptTranslationUnalignedDivNode(entriesPerChapter)
                 }
             }
 
         }.toString(printOptions = printOptions)
     }
+
+    fun bookToTEI(entries: List<Entry>, projectName: String): String =
+        xml("TEI") {
+            prologNodes("book")
+            xmlns = "http://www.tei-c.org/ns/1.0"
+            "teiHeader" {
+                "fileDesc" {
+                    "titleStmt" {
+//                        "title" {
+//                            -title
+//                        }
+//                        "editor" {
+//                            attribute("xml:id", editorId)
+//                            -editorName
+//                            comment(editorUrl)
+//                        }
+                    }
+                    "publicationStmt" {
+                        "publisher" {
+                            "name" {
+                                attribute("ref", "https://huygens.knaw.nl")
+                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
+                            }
+                        }
+//                        "date" {
+//                            attribute("when", currentDate)
+//                            -currentDate
+//                        }
+                        "ptr" {
+                            attribute("target", "https://$projectName.huygens.knaw.nl/edition")
+                        }
+                    }
+                    "sourceDesc" {
+                        "msDesc" {
+                            "msIdentifier" {
+                                "country" {}
+//                                "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
+//                                "institution" { metadataMap[letterMetadata.institution] ?: "" }
+//                                "repository" { }
+//                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
+//                                "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+                            }
+                            "physDesc" {
+                                "objectDesc" {
+                                    attribute("form", "book")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            facsimileNode(entries, projectName)
+            "text" {
+                attribute("xml:id", "og")
+                "body" {
+                    attribute("divRole", "doc-sections")
+                    bookDivNode(entries, "nl")
+                }
+            }
+        }.toString(printOptions = printOptions)
+
+    fun bookMainToTEI(
+        projectName: String,
+        surfaceRefs: List<XIncludeRef>,
+        divRefs: List<XIncludeRef>,
+        noteRefs: List<XIncludeRef>
+    ): String {
+        val title = conversionConfig.title
+        val editorName = conversionConfig.editor.name
+        val editorId = conversionConfig.editor.id
+        val editorUrl = conversionConfig.editor.url
+        val xiNamespace = Namespace("xi", "http://www.w3.org/2001/XInclude")
+
+        return xml("TEI") {
+            prologNodes("book")
+            xmlns = "http://www.tei-c.org/ns/1.0"
+            namespace(xiNamespace)
+
+            "teiHeader" {
+                "fileDesc" {
+                    "titleStmt" {
+                        "title" {
+                            -title
+                        }
+                        "editor" {
+                            attribute("xml:id", editorId)
+                            -editorName
+                            comment(editorUrl)
+                        }
+                    }
+                    "publicationStmt" {
+                        "publisher" {
+                            "name" {
+                                attribute("ref", "https://huygens.knaw.nl")
+                                -"Huygens Institute for the History and Cultures of the Netherlands (KNAW)"
+                            }
+                        }
+                        //                        "date" {
+                        //                            attribute("when", currentDate)
+                        //                            -currentDate
+                        //                        }
+                        "ptr" {
+                            attribute("target", "https://$projectName.huygens.knaw.nl/edition")
+                        }
+                    }
+                    "sourceDesc" {
+                        "msDesc" {
+                            "msIdentifier" {
+                                "country" {}
+                                //                                "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
+                                //                                "institution" { metadataMap[letterMetadata.institution] ?: "" }
+                                //                                "repository" { }
+                                //                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
+                                //                                "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+                            }
+                            "physDesc" {
+                                "objectDesc" {
+                                    attribute("form", "book")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            "facsimile" { xIncludes(surfaceRefs) }
+            "text" {
+                attribute("xml:id", "og")
+                "body" {
+                    attribute("divRole", "doc-sections")
+                    xIncludes(divRefs)
+                }
+            }
+            "standOff" {
+                "listAnnotation" {
+                    attribute("type", "notes")
+                    xIncludes(noteRefs)
+                }
+            }
+        }.toString(printOptions = printOptions)
+    }
+
+    private fun Node.xIncludes(xIncludeRefs: List<XIncludeRef>) {
+        xIncludeRefs.forEach {
+            "xi:include" {
+                attribute("href", it.href)
+                attribute("xpointer", it.xpointer)
+                "xi:fallback" {
+                    comment("including ${it.href}#${it.xpointer} failed")
+                }
+            }
+        }
+    }
+
+    data class XIncludeRef(
+        val href: String,
+        val xpointer: String,
+    )
 
     data class ManuscriptEntry(
         val id: String,
@@ -162,13 +320,14 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         val facsRef: String,
         val originalLines: List<String>,
         val translationLines: List<String>,
-        val translationUnalignedLines: List<String>,
+        val translationUnalignedParagraphs: List<String>,
     )
 
     fun Entry.toManuscriptEntry(facsRef: String): ManuscriptEntry {
         val metadata = metadata.asMap()
-        val folioNr = metadata["Folionummer"]!!
-        val originalLines = parallelTexts["Transcriptie"]!!.text.split("<br>")
+        logger.info { metadata }
+        val folioNr = metadata["Bladzijde(n)"]!!
+        val originalLines = parallelTexts["Diplomatic"]!!.text.split("<br>")
         val translationLines = parallelTexts["Reconstructie"]!!.text.split("<br>")
         val translationUnalignedParagraphs = parallelTexts["Vertaling"]!!.text.split("<br><br>")
         return ManuscriptEntry(
@@ -192,7 +351,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             copy(
                 originalLines = segmentedOriginalLines[i],
                 translationLines = segmentedTranslationLines[i],
-                translationUnalignedLines = segmentedTranslationUnalignedParagraphs[i]
+                translationUnalignedParagraphs = segmentedTranslationUnalignedParagraphs[i]
             )
         }
     }
@@ -210,14 +369,14 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     attribute("n", chapter)
                     entries.forEach { entry ->
                         val entryMetadata = entry.metadata.asMap()
-                        val folioNr = entryMetadata["Folionummer"]!!
+                        val folioNr = entryMetadata["Bladzijde(n)"]!!
                         "pb" {
                             attribute("xml:id", "pb-mgh-$folioNr")
                             attribute("facs", "#s${entryCounter.getAndIncrement()}")
                             attribute("n", folioNr)
                         }
                         metadataCommentNodes(entry)
-                        val textLayer = entry.parallelTexts["Transcriptie"]!!
+                        val textLayer = entry.parallelTexts["Diplomatic"]!!
                         textLayer.text.split("<br>").forEach { line ->
                             val lineNo = lineCounter.getAndIncrement()
                             "l" {
@@ -238,6 +397,45 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         }
     }
 
+    private fun Node.bookDivNode(entries: List<Entry>, lang: String) {
+        val entryCounter = AtomicInt(1)
+        val lineCounter = AtomicInt(1)
+        "div" {
+            attribute("xml:lang", lang)
+            attribute("xml:id", "og-$lang")
+            attribute("type", "original")
+            entries.forEach { entry ->
+                val entryMetadata = entry.metadata.asMap()
+                val folioNr = entryMetadata["Bladzijde(n)"]!!
+                "pb" {
+                    attribute("xml:id", "pb-$lang-$folioNr")
+                    attribute("facs", "#s${entryCounter.getAndIncrement()}")
+                    attribute("n", folioNr)
+                }
+                metadataCommentNodes(entry)
+                entry.parallelTexts["Diplomatic"]!!.text
+                    .replace("<b>", "")
+                    .replace("</b>", "")
+                    .convertVerticalSpace()
+                    .split("<br>")
+                    .forEach { line ->
+                        val lineNo = lineCounter.getAndIncrement()
+                        "l" {
+//                            attribute("xml:id", "og-$lang-$lineNo")
+//                            attribute("n", lineNo)
+                            unsafeText(
+                                line
+                                    .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                    .replace("&nbsp; ", "&nbsp;&nbsp;")
+                                    .convertHorizontalSpace()
+                                    .trim()
+                            )
+                        }
+                    }
+            }
+        }
+    }
+
     private fun Node.manuscriptTranslationDivNode(entriesPerChapter: Map<String, List<Entry>>) {
         val entryCounter = AtomicInt(1)
         val lineCounter = AtomicInt(1)
@@ -252,7 +450,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     attribute("corresp", "#og-mgh-$chapter")
                     entries.forEach { entry ->
                         val entryMetadata = entry.metadata.asMap()
-                        val folioNr = entryMetadata["Folionummer"]!!
+                        val folioNr = entryMetadata["Bladzijde(n)"]!!
                         "pb" {
                             attribute("xml:id", "pb-dum-$folioNr")
                             attribute("corresp", "#pb-mgh-$folioNr")

@@ -8,6 +8,7 @@ BRICOR=brieven-correspondenten-1900
 BOLCOS=correspondentie-bolland-en-cosijn
 CLUSIUS=clusiuscorrespondence
 OGIER=ogier
+ADK=anton-de-kom
 
 .PHONY: shadow-jar
 shadow-jar:
@@ -115,6 +116,25 @@ browse-ogier:
 	@open https://gitlab.huc.knaw.nl/eDITem/ogier
 	@open https://gitlab.huc.knaw.nl/eDITem/ogier-settings
 
+# anton-de-kom
+.PHONY: anton-de-kom
+anton-de-kom:
+	./bin/elabctl archive ./data/elab4-$(ADK).war
+	echo "validating tei export..."
+	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(ADK)/schema/editem-book.rng build/zip/elab4-$(ADK)/book/*.xml >> out/xml-validate.log
+	less out/xml-validate.log
+
+.PHONY: anton-de-kom-rsync
+anton-de-kom-rsync:
+	rsync -rav build/zip/elab4-$(ADK)/* ~/workspaces/editem/elaborate-export/$(ADK)/tei/
+	cd ~/workspaces/editem/elaborate-export/$(ADK) && (git commit -a -m "new elaborate export" && git push)
+
+.PHONY: browse-anton-de-kom
+browse-anton-de-kom:
+	@open https://gitlab.huc.knaw.nl/eDITem/ogier
+	@open https://gitlab.huc.knaw.nl/eDITem/ogier-settings
+
+
 .PHONY: help
 help:
 	@echo "make-tools for $(TAG)"
@@ -143,3 +163,7 @@ help:
 	@echo "  $(OGIER)        - to run the tei export for $(OGIER)"
 	@echo "  $(OGIER)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(OGIER)"
 	@echo "  browse-$(OGIER) - to open the $(OGIER) gitlab repo in your browser"
+	@echo
+	@echo "  $(ADK)        - to run the tei export for $(ADK)"
+	@echo "  $(ADK)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(ADK)"
+	@echo "  browse-$(ADK) - to open the $(ADK) gitlab repo in your browser"

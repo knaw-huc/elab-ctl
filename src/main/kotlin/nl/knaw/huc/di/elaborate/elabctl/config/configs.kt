@@ -21,7 +21,10 @@ enum class ProjectType {
     LETTERS,
 
     @SerialName("manuscript")
-    MANUSCRIPT
+    MANUSCRIPT,
+
+    @SerialName("book")
+    BOOK
 }
 
 @Serializable
