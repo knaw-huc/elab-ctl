@@ -735,7 +735,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             .removeLineBreaks()
                             .convertVerticalSpace()
                             .convertHorizontalSpace()
-                            .setParagraphs(divType, lang)
+                            .setParagraphs(divType, lang, sectionId)
                             .setPageBreaks(divType, lang, conversionConfig.pageBreakEncoding, sectionId)
                             //                                .wrapLines(80)
                             .wrapSpaceElementWithNewLines()
@@ -749,7 +749,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                                 unsafeText(text)
                             } else {
                                 "p" {
-                                    attribute("xml:id", "p.$divType.$lang.1")
+                                    attribute("xml:id", "p.$sectionId.$divType.$lang.1")
                                     unsafeText(text)
                                 }
                             }
@@ -774,7 +774,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             attribute("xml:id", "note_$id")
                             attribute("n", noteCounter.andIncrement)
                             attribute("type", data.type.name.replace(" ", "_"))
-                            comment("${data.type.name}")
+//                            comment(data.type.name)
                             "p" { unsafeText(noteText.replace("<lb/>", "<lb/>\n")) }
                         }
                     }
@@ -933,8 +933,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             .replace("<nbsp/> ", "<nbsp/><nbsp/>")
     }
 
-    private fun String.setParagraphs(divType: String, lang: String): String {
-        val visitor = ParagraphVisitor(divType, lang)
+    private fun String.setParagraphs(divType: String, lang: String, sectionId: Int): String {
+        val visitor = ParagraphVisitor(divType, lang, sectionId)
         val xml = this.wrapInXml()
         Document.createFromXml(xml, false)
             .accept(visitor)

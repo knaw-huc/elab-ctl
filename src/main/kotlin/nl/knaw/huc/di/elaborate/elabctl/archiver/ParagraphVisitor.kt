@@ -12,21 +12,24 @@ import nl.knaw.huygens.tei.Traversal.NEXT
 import nl.knaw.huygens.tei.XmlContext
 import nl.knaw.huygens.tei.handlers.DefaultTextHandler
 
-internal class ParagraphVisitor(divType: String, lang: String) : DelegatingVisitor<XmlContext>(XmlContext()) {
+internal class ParagraphVisitor(divType: String, lang: String, sectionId: Int) :
+    DelegatingVisitor<XmlContext>(XmlContext()) {
 
     val paraCounter = AtomicInt(2)
 
     init {
         paraCounter.set(2)
-        setTextHandler(MyTextHandler(divType, lang, paraCounter))
+        setTextHandler(MyTextHandler(divType, lang, paraCounter, sectionId))
         setCommentHandler(KeepCommentHandler())
-        setDefaultElementHandler(MyElementHandler(divType, lang))
+        setDefaultElementHandler(MyElementHandler(divType, lang, sectionId))
     }
 
     class MyTextHandler<T : Context>(
         val divType: String,
         val lang: String,
-        val paraCounter: AtomicInt
+        val paraCounter: AtomicInt,
+        val sectionId: Int
+
     ) :
         DefaultTextHandler<T>() {
 
@@ -54,17 +57,16 @@ internal class ParagraphVisitor(divType: String, lang: String) : DelegatingVisit
                 } else {
                     ""
                 }
-                val opener = "<p xml:id=\"p.$divType.$lang.$n\" n=\"$n\"$indent>"
+                val opener = "<p xml:id=\"p.$sectionId.$divType.$lang.$n\" n=\"$n\"$indent>"
 
                 val closingTags = openElements.descendingIterator().asSequence().map { "</${it.name}>" }.joinToString()
                 val openingTags = openElements.iterator()
                     .asSequence()
-                    .map {
+                    .joinToString {
                         val builder = StringBuilder()
                         it.appendOpenTagTo(builder)
                         builder.toString()
                     }
-                    .joinToString()
 
                 return parts[0].trim() + closingTags + "</p>\n" + opener + openingTags + parts[1].trim()
             } else {
@@ -74,11 +76,13 @@ internal class ParagraphVisitor(divType: String, lang: String) : DelegatingVisit
 
     }
 
-    internal class MyElementHandler(val divType: String, val lang: String) : ElementHandler<XmlContext> {
+    internal class MyElementHandler(val divType: String, val lang: String, val sectionId: Int) :
+        ElementHandler<XmlContext> {
         override fun enterElement(element: Element, context: XmlContext): Traversal {
             when (element.name) {
                 "xml" -> {
-                    val p = Element("p").withAttribute("xml:id", "p.$divType.$lang.1").withAttribute("n", "1")
+                    val p =
+                        Element("p").withAttribute("xml:id", "p.$sectionId.$divType.$lang.1").withAttribute("n", "1")
                     context.addOpenTag(p)
                 }
 
