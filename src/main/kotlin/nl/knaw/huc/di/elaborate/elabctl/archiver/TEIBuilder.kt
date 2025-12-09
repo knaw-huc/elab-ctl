@@ -572,7 +572,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 metadataMap,
                 letterMetadata
             )
-            profileDesc(metadataMap, letterMetadata)
+//            profileDesc(metadataMap, letterMetadata)
         }
     }
 
@@ -626,7 +626,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     }
                     "physDesc" {
                         "objectDesc" {
-                            attribute("form", "letter")
+                            attribute("form", "book")
                         }
                     }
                 }
@@ -761,7 +761,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             attribute("xml:id", "note_$id")
                             attribute("n", noteCounter.andIncrement)
                             comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
-                            "p" { unsafeText(noteText) }
+                            "p" { unsafeText(noteText.replace("<lb/>", "<lb/>\n")) }
                         }
                     }
                 }
