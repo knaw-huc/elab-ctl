@@ -359,9 +359,9 @@ object Archiver {
         projectName: String,
         errors: MutableList<String>,
     ) {
-        val allSurfaceRefs = mutableListOf<TEIBuilder.XIncludeRef>()
+        val allSurfaceGrpRefs = mutableListOf<TEIBuilder.XIncludeRef>()
         val allDivRefs = mutableListOf<TEIBuilder.XIncludeRef>()
-        val allNoteRefs = mutableListOf<TEIBuilder.XIncludeRef>()
+        val listAnnotationRefs = mutableListOf<TEIBuilder.XIncludeRef>()
         val facsimileCounter = AtomicInteger(1)
         val divCounter = AtomicInteger(1)
         entryDescriptions
@@ -404,24 +404,24 @@ object Archiver {
                     i+1
                 )
                 val sectionPath = teiPath.replace("letters", "book")
-                allSurfaceRefs.addAll(xiRefs.surfaceRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
+                allSurfaceGrpRefs.addAll(xiRefs.surfaceGrpRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
                 allDivRefs.addAll(xiRefs.divRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
-                allNoteRefs.addAll(xiRefs.noteRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
+                listAnnotationRefs.addAll(xiRefs.listAnnotationRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
                 exportTei(tei, sectionPath, errors)
             }
 
         val (tei, teiPath) = buildBookTei(
             teiBuilder = teiBuilder,
             projectName = projectName,
-            xiRefs = XIRefs(allSurfaceRefs, allDivRefs, allNoteRefs),
+            xiRefs = XIRefs(allSurfaceGrpRefs, allDivRefs, listAnnotationRefs),
         )
         exportTei(tei, teiPath, errors)
     }
 
     data class XIRefs(
-        val surfaceRefs: List<TEIBuilder.XIncludeRef>,
+        val surfaceGrpRefs: List<TEIBuilder.XIncludeRef>,
         val divRefs: List<TEIBuilder.XIncludeRef>,
-        val noteRefs: List<TEIBuilder.XIncludeRef>,
+        val listAnnotationRefs: List<TEIBuilder.XIncludeRef>,
     )
 
 //    private fun convertBookProject0(

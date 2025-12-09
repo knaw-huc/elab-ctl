@@ -49,9 +49,8 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         val editorUrl = conversionConfig.editor.url
 
         val letterMetadata = conversionConfig.letterMetadata!!
-        var noteRefs = emptyList<XIncludeRef>()
-        val startDivCount = divCounter.get()
         val startFacsCount = facsimileCounter.get()
+        var listAnnotationRefs = emptyList<XIncludeRef>()
         val tei = xml("TEI") {
             prologNodes("book")
             xmlns = "http://www.tei-c.org/ns/1.0"
@@ -67,22 +66,32 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 metadataMap,
                 letterMetadata
             )
-            facsimileNode(listOf(entry), teiName, facsimileCounter)
+            facsimileNode(listOf(entry), teiName, facsimileCounter, sectionId)
             metadataCommentNodes(entry)
             val annotationMap: MutableMap<Long, AnnotationData> = textNode(
                 entry,
                 metadataMap,
                 letterMetadata,
-                divCounter,
                 sectionId
             )
-            noteRefs = annotationMap.keys.map { "note_$it" }.map { XIncludeRef("", it) }
-            standOffNode(annotationMap)
+            if (annotationMap.isNotEmpty()) {
+                listAnnotationRefs = listOf(XIncludeRef("", "listannotation.$sectionId"))
+            }
+            standOffNode(annotationMap, sectionId)
         }.toString(printOptions = printOptions)
+        val surfaceGrpRefs = if (startFacsCount == facsimileCounter.get()) emptyList() else {
+            listOf(XIncludeRef("", "surfacegrp.$sectionId"))
+        }
+        val divRefs = if (entry.parallelTexts.any { it.value.text.isNotEmpty() }) {
+            listOf(XIncludeRef("", "div.$sectionId"))
+        } else {
+            emptyList()
+        }
+
         val xiRefs = Archiver.XIRefs(
-            (startFacsCount..<facsimileCounter.get()).map { XIncludeRef("", "s$it") },
-            (startDivCount..<divCounter.get()).map { XIncludeRef("", "div.$it") },
-            noteRefs
+            surfaceGrpRefs,
+            divRefs,
+            listAnnotationRefs
         )
         return Pair(tei, xiRefs)
     }
@@ -163,7 +172,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
 //                    }
 //                }
             }
-            facsimileNode(entries, projectName, AtomicInteger(1))
+            facsimileNode(entries, projectName, AtomicInteger(1), 1)
             "text" {
                 attribute("xml:id", "og")
                 "body" {
@@ -227,7 +236,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     }
                 }
             }
-            facsimileNode(entries, projectName, AtomicInteger(1))
+            facsimileNode(entries, projectName, AtomicInteger(1), 1)
             "text" {
                 attribute("xml:id", "og")
                 "body" {
@@ -298,7 +307,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     }
                 }
             }
-            "facsimile" { xIncludes(xiRefs.surfaceRefs) }
+            "facsimile" { xIncludes(xiRefs.surfaceGrpRefs) }
             "text" {
                 attribute("xml:id", "og")
                 "body" {
@@ -307,10 +316,10 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 }
             }
             "standOff" {
-                "listAnnotation" {
-                    attribute("type", "notes")
-                    xIncludes(xiRefs.noteRefs)
-                }
+//                "listAnnotation" {
+//                    attribute("type", "notes")
+                xIncludes(xiRefs.listAnnotationRefs)
+//                }
             }
         }.toString(printOptions = printOptions)
     }
@@ -663,21 +672,25 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     private fun Node.facsimileNode(
         entries: List<Entry>,
         baseName: String,
-        facsimileCounter: AtomicInteger
+        facsimileCounter: AtomicInteger,
+        sectionId: Int
     ) {
         val facsimiles = entries.flatMap { it.facsimiles }
         if (facsimiles.isNotEmpty()) {
             "facsimile" {
-                facsimiles.forEachIndexed { i, facs ->
-                    val n = facsimileCounter.getAndIncrement()
-                    "surface" {
-                        attribute("n", n)
-                        attribute("xml:id", "s$n")
-                        if (facs.title.isNotEmpty() && facs.title != "facsimile") {
-                            comment(facs.title)
-                        }
-                        "graphic" {
-                            attribute("url", "$baseName-${(i + 1).toString().padStart(2, '0')}")
+                "surfaceGrp" {
+                    attribute("xml:id", "surfacegrp.$sectionId")
+                    facsimiles.forEachIndexed { i, facs ->
+                        val n = facsimileCounter.getAndIncrement()
+                        "surface" {
+                            attribute("n", n)
+                            attribute("xml:id", "s$n")
+                            if (facs.title.isNotEmpty() && facs.title != "facsimile") {
+                                comment(facs.title)
+                            }
+                            "graphic" {
+                                attribute("url", "$baseName-${(i + 1).toString().padStart(2, '0')}")
+                            }
                         }
                     }
                 }
@@ -695,7 +708,6 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         entry: Entry,
         metadataMap: Map<String, String>,
         letterMetadata: LetterMetadataConfig,
-        divCounter: AtomicInteger,
         sectionId: Int
     ): MutableMap<Long, AnnotationData> {
         val annotationMap: MutableMap<Long, AnnotationData> = mutableMapOf()
@@ -707,7 +719,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     .toSortedMap()
                     //                        .onEach { logger.info { "\ntext=\"\"\"${it.value.text}\"\"\"\"" } }
                     .forEach { (layerName, textLayer) ->
-                        val divId = "div.${divCounter.getAndIncrement()}"
+                        val divId = "div.$sectionId"
 //                        val divType = projectConfig.divTypeForLayerName[layerName] ?: layerName.lowercase()
                         val divType = "original"
                         val lang = when {
@@ -748,19 +760,21 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
         return annotationMap
     }
 
-    private fun Node.standOffNode(annotationMap: MutableMap<Long, AnnotationData>) {
+    private fun Node.standOffNode(annotationMap: MutableMap<Long, AnnotationData>, sectionId: Int) {
         if (annotationMap.isNotEmpty()) {
             val noteCounter = AtomicInt(1)
             "standOff" {
                 "listAnnotation" {
                     attribute("type", "notes")
+                    attribute("xml:id", "listannotation.$sectionId")
                     annotationMap.forEach { (id, data) ->
                         val noteContent = data.text.ifEmpty { data.annotatedText }
                         val noteText = AnnotationBodyConverter.convert(noteContent)
                         "note" {
                             attribute("xml:id", "note_$id")
                             attribute("n", noteCounter.andIncrement)
-                            comment("${data.type.name} / ${data.type.description} / ${data.type.metadata.entries}")
+                            attribute("type", data.type.name.replace(" ", "_"))
+                            comment("${data.type.name}")
                             "p" { unsafeText(noteText.replace("<lb/>", "<lb/>\n")) }
                         }
                     }
