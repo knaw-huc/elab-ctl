@@ -291,12 +291,19 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                     "sourceDesc" {
                         "msDesc" {
                             "msIdentifier" {
-                                "country" {}
-                                //                                "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
-                                //                                "institution" { metadataMap[letterMetadata.institution] ?: "" }
-                                //                                "repository" { }
-                                //                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
-                                //                                "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+                                "institution" { -"Internet Archive" }
+                                "idno" { -"WijSlavenVanSurinameAntonDeKom" }
+                                "idno" {
+                                    attribute("type", "URI")
+                                    -"https://archive.org/details/WijSlavenVanSurinameAntonDeKom"
+                                }
+                                "altIdentifier" {
+                                    "country" { -"The Netherlands" }
+                                    "settlement" { -"Amsterdam" }
+                                    "institution" { -"Koninklijk Instituut voor de Tropen" }
+                                    "idno" { -"617594" }
+                                }
+
                             }
                             "physDesc" {
                                 "objectDesc" {
@@ -626,12 +633,19 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
             "sourceDesc" {
                 "msDesc" {
                     "msIdentifier" {
-                        "country" {}
-                        "settlement" { metadataMap[letterMetadata.settlement] ?: "" }
-                        "institution" { metadataMap[letterMetadata.institution] ?: "" }
-                        //                                "repository" { }
-                        //                                { "collection" { -(metadataMap[conversionConfig.letterMetadata.collection] ?: "") } }
-                        "idno" { -(metadataMap[letterMetadata.idno] ?: "") }
+                        "institution" { -"Internet Archive" }
+                        "idno" { -"WijSlavenVanSurinameAntonDeKom" }
+                        "idno" {
+                            attribute("type", "URI")
+                            -"https://archive.org/details/WijSlavenVanSurinameAntonDeKom"
+                        }
+                        "altIdentifier" {
+                            "country" { -"The Netherlands" }
+                            "settlement" { -"Amsterdam" }
+                            "institution" { -"Koninklijk Instituut voor de Tropen" }
+                            "idno" { -"617594" }
+                        }
+
                     }
                     "physDesc" {
                         "objectDesc" {
