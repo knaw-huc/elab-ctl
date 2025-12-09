@@ -126,8 +126,9 @@ anton-de-kom:
 
 .PHONY: anton-de-kom-rsync
 anton-de-kom-rsync:
-	rsync -rav build/zip/elab4-$(ADK)/* ~/workspaces/editem/elaborate-export/$(ADK)/tei/
-	cd ~/workspaces/editem/elaborate-export/$(ADK) && (git commit -a -m "new elaborate export" && git push)
+	find build/zip/elab4-$(ADK)/ -depth -empty -delete
+	rsync -rav build/zip/elab4-$(ADK)/* ~/workspaces/elab4/anton-de-kom-data/tei/
+	cd ~/workspaces/elab4/anton-de-kom-data && (git commit -a -m "new elaborate export" && git push)
 
 .PHONY: browse-anton-de-kom
 browse-anton-de-kom:
