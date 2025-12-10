@@ -36,6 +36,7 @@ object Archiver {
 
     @OptIn(ExperimentalSerializationApi::class)
     fun archive(warPaths: List<String>) {
+        val customOrder = json.decodeFromStream<List<String>>(File("data/adk-order.json").inputStream())
         val errors: MutableList<String> = mutableListOf()
         warPaths.forEach { warPath ->
             val projectName = warPath.split('/').last().replace(".war", "")
@@ -68,7 +69,9 @@ object Archiver {
                 }
 //            prettyPrint(elabConfig)
                 val entryTypeName = elabConfig.entryTermSingular
-                val entries = elabConfig.entries
+                val originalEntries = elabConfig.entries
+                val entries = customOrder.map { filename -> originalEntries.first { it.datafile == filename } }
+                println(entries.joinToString("\n"))
                 val total = entries.size
                 when (conversionConfig.type) {
                     ProjectType.LETTERS -> convertLettersProject(
@@ -270,7 +273,7 @@ object Archiver {
 //    }
 
     private fun convertLettersProject(
-        entryDescriptions: ArrayList<EntryDescription>,
+        entryDescriptions: List<EntryDescription>,
         total: Int,
         entryTypeName: String,
         zip: ZipFile,
@@ -314,7 +317,7 @@ object Archiver {
     }
 
     private fun convertManuscriptProject(
-        entryDescriptions: ArrayList<EntryDescription>,
+        entryDescriptions: List<EntryDescription>,
         total: Int,
         entryTypeName: String,
         zip: ZipFile,
@@ -348,7 +351,7 @@ object Archiver {
     }
 
     private fun convertBookProject(
-        entryDescriptions: ArrayList<EntryDescription>,
+        entryDescriptions: List<EntryDescription>,
         total: Int,
         entryTypeName: String,
         zip: ZipFile,
@@ -366,9 +369,7 @@ object Archiver {
         val divCounter = AtomicInteger(1)
         entryDescriptions
             .map { loadEntry(zip, it) }
-            .sortedBy { it.metadata[0].value }
             .forEachIndexed { i, entry ->
-
 //            }
 //
 //        entryDescriptions
@@ -401,12 +402,18 @@ object Archiver {
                     teiName,
                     facsimileCounter,
                     divCounter,
-                    i+1
+                    i + 1
                 )
                 val sectionPath = teiPath.replace("letters", "book")
                 allSurfaceGrpRefs.addAll(xiRefs.surfaceGrpRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
                 allDivRefs.addAll(xiRefs.divRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
-                listAnnotationRefs.addAll(xiRefs.listAnnotationRefs.map { it.copy(href = sectionPath.substringAfterLast("/")) })
+                listAnnotationRefs.addAll(xiRefs.listAnnotationRefs.map {
+                    it.copy(
+                        href = sectionPath.substringAfterLast(
+                            "/"
+                        )
+                    )
+                })
                 exportTei(tei, sectionPath, errors)
             }
 
@@ -501,7 +508,7 @@ object Archiver {
     private fun buildManuscriptTei(
         teiBuilder: TEIBuilder,
         projectName: String,
-        entryDescriptions: ArrayList<EntryDescription>,
+        entryDescriptions: List<EntryDescription>,
         zip: ZipFile
     ): Pair<String, String> {
         val shortName = projectName.substringAfter("elab4-")

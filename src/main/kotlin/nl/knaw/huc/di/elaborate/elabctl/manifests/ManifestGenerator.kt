@@ -11,6 +11,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.json
+import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver.loadEntry
 import nl.knaw.huc.di.elaborate.elabctl.archiver.EditionConfig
 import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
 
@@ -35,7 +36,8 @@ object ManifestGenerator {
         val destDir = "out/$projectName"
         File(destDir).mkdirs()
         val manifestFactory = ManifestV3Factory(
-            "https://editem.huygens.knaw.nl/files/$projectName/static/manifests",
+//            "https://editem.huygens.knaw.nl/files/$projectName/static/manifests",
+            "https://elaborate.pages.huc.knaw.nl/anton-de-kom-data/manifests",
             "$PROD_IIIF_BASE_URL/$projectName%7Cpages%7C"
         )
         val pageSizesPath = "$destDir/sizes_pages.tsv"
@@ -48,6 +50,7 @@ object ManifestGenerator {
         val groups = FacsimileDimensionsFactory
             .readFacsimileDimensionsFromZipFilePath(zipPath)
             .groupBy { it.fileName.substringBeforeLast('-') }
+
         when (mode) {
             Mode.ENTRY -> groups.forEach { (entryName, facsimileDimensions) ->
                 val manifestJson = manifestFactory.forEntry(entryName, facsimileDimensions, elabConfig)
