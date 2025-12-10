@@ -11,33 +11,32 @@ import info.freelibrary.iiif.presentation.v3.properties.Metadata
 import info.freelibrary.iiif.presentation.v3.properties.Value
 import info.freelibrary.iiif.presentation.v3.properties.behaviors.ManifestBehavior
 import info.freelibrary.iiif.presentation.v3.services.ImageService3
-import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.di.elaborate.elabctl.archiver.EditionConfig
-import nl.knaw.huc.di.elaborate.elabctl.archiver.EntryDescription
-import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory
+import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory.FacsimileDimensions
 
 class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
 
     fun forEntry(
         entryName: String,
-        facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>,
+        facsimileDimensions: List<FacsimileDimensions>,
         config: EditionConfig
     ): Manifest {
         val manifestId = "$manifestBaseUrl/$entryName-manifest.json"
         val metadata = listOf(
-            Metadata(Label("en", "EntryName"), Value(I18n("en", entryName)))
+            Metadata(Label("en", "Collection"), Value(I18n("en", config.title))),
+            Metadata(Label("en", "Section"), Value(I18n("en", entryName))),
         )
         return Manifest(manifestId, Label("en", entryName))
-            .setRights("http://creativecommons.org/licenses/by/4.0/")
+            .setRights(LICENSE)
             .setBehaviors(ManifestBehavior.PAGED)
             .setMetadata(metadata)
-            .setCanvases(toCanvases(facsimileDimensions, manifestId, config.entries))
+            .setCanvases(facsimileDimensions.toCanvases(manifestId))
     }
 
     fun forProject(
         projectName: String,
         config: EditionConfig,
-        groups: Map<String, List<FacsimileDimensionsFactory.FacsimileDimensions>>
+        groups: Map<String, List<FacsimileDimensions>>
     ): Manifest {
         val manifestId = "$manifestBaseUrl/$projectName-manifest.json"
         val projectTitle = config.title
@@ -46,25 +45,18 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
             Metadata(Label("en", "Name"), Value(I18n("en", projectTitle)))
         )
         return Manifest(manifestId, Label("en", projectTitle))
-            .setRights("http://creativecommons.org/licenses/by/4.0/")
+            .setRights(LICENSE)
             .setBehaviors(ManifestBehavior.PAGED)
             .setMetadata(metadata)
-            .setCanvases(toCanvases(facsimileDimensions, manifestId, config.entries))
+            .setCanvases(facsimileDimensions.toCanvases(manifestId))
     }
 
-    private fun toCanvases(
-        facsimileDimensions: List<FacsimileDimensionsFactory.FacsimileDimensions>,
-        manifestId: String,
-        entriesMetadata: ArrayList<EntryDescription>
-    ): List<Canvas> =
-        facsimileDimensions
-            .sortedBy { it.fileName }
+    private fun List<FacsimileDimensions>.toCanvases(manifestId: String): List<Canvas> =
+        sortedBy { it.fileName }
             .mapIndexed { i, facsimileDimensions ->
-                val entryMetadata = entriesMetadata[i]
-                logger.info { entryMetadata.name }
-//                val imageBaseName = facsimileDimensions.fileName.substringBeforeLast(".")
+                val canvasTitle = facsimileDimensions.fileName
                 val canvas =
-                    Canvas("$manifestId#canvas-$i", Label("en", entryMetadata.name))
+                    Canvas("$manifestId#canvas-$i", Label("en", canvasTitle))
                         .setWidthHeight(facsimileDimensions.width, facsimileDimensions.height)
                 val page = AnnotationPage<PaintingAnnotation>("$manifestId#page-$i")
                 val imageUrl = "${iiifBaseUrl}${facsimileDimensions.fileName}"
@@ -79,4 +71,8 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
                 canvas.paintingPages.add(page.addAnnotations(annotation))
                 canvas
             }
+
+    companion object {
+        const val LICENSE = "http://creativecommons.org/licenses/by-nc/4.0/"
+    }
 }
