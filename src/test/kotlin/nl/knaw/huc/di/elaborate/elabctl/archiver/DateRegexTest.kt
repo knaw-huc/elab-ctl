@@ -104,7 +104,7 @@ class DateRegexTest {
     )
 
     fun `test getDateAttributes`(input: String, expectedNotBefore: String, expectedNotAfter: String) {
-        val result = DateAttributeFactory(LetterDateConfig(1900, 2000)).getDateAttributes(input)
+        val result = DateAttributeFactory(LetterDateConfig(1877, 1917)).getDateAttributes(input)
         assertEquals(expectedNotBefore, result["notBefore"], "wrong notBefore for $input")
         assertEquals(expectedNotAfter, result["notAfter"], "wrong notAfter for $input")
     }
