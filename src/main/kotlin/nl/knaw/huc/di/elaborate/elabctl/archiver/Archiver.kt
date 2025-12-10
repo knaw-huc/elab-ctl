@@ -25,6 +25,14 @@ object Archiver {
 
     val json = Json { ignoreUnknownKeys = true }
 
+    val teiParts = listOf(
+        "about",
+        "apparatus",
+        "letters",
+        "manuscript",
+        "book",
+    )
+
     @OptIn(ExperimentalSerializationApi::class)
     fun archive(warPaths: List<String>) {
         val errors: MutableList<String> = mutableListOf()
@@ -37,12 +45,12 @@ object Archiver {
             )
             val conversionConfig = loadConfig(projectConfig.projectName)
             val teiBuilder = TEIBuilder(projectConfig, conversionConfig)
-            File("build/zip/$projectName/letters").deleteRecursively()
-            File("build/zip/$projectName/manuscript").deleteRecursively()
-            File("build/zip/$projectName/about").deleteRecursively()
-            File("build/zip/$projectName/letters").mkdirs()
-            File("build/zip/$projectName/manuscript").mkdirs()
-            File("build/zip/$projectName/about").mkdirs()
+            for (part in teiParts) {
+                File("build/zip/$projectName/$part").apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+            }
             File("out").mkdirs()
             logger.info { "<= $warPath" }
             val facsimilePaths = mutableListOf<String>()
@@ -265,7 +273,7 @@ object Archiver {
                 logger.info { "entry ${i + 1} / $total..." }
                 logger.info { entryDescription }
                 val teiName =
-                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                    teiName(entryTypeName, i + 1, entryDescription.name.lowercase())
                 val entry = loadEntry(zip, entryDescription)
                 report.addEntry(entry, teiName)
 
@@ -290,7 +298,7 @@ object Archiver {
     }
 
     private fun convertManuscriptProject(
-        entryDescriptions: ArrayList<EntryDescription>,
+        entryDescriptions: List<EntryDescription>,
         total: Int,
         entryTypeName: String,
         zip: ZipFile,
@@ -307,7 +315,7 @@ object Archiver {
                 logger.info { "entry ${i + 1} / $total..." }
                 logger.info { entryDescription }
                 val teiName =
-                    teiName(entryTypeName, i + 1, entryDescription.shortName)
+                    teiName(entryTypeName, i + 1, entryDescription.name)
                 val entry = loadEntry(zip, entryDescription)
                 report.addEntry(entry, teiName)
 

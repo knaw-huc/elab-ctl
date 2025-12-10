@@ -59,12 +59,11 @@ internal class ParagraphVisitor(divType: String, lang: String) : DelegatingVisit
                 val closingTags = openElements.descendingIterator().asSequence().map { "</${it.name}>" }.joinToString()
                 val openingTags = openElements.iterator()
                     .asSequence()
-                    .map {
+                    .joinToString {
                         val builder = StringBuilder()
                         it.appendOpenTagTo(builder)
                         builder.toString()
                     }
-                    .joinToString()
 
                 return parts[0].trim() + closingTags + "</p>\n" + opener + openingTags + parts[1].trim()
             } else {
