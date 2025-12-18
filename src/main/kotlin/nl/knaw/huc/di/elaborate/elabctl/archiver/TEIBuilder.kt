@@ -74,9 +74,9 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                 letterMetadata,
                 sectionId
             )
-            if (annotationMap.isNotEmpty()) {
-                listAnnotationRefs = listOf(XIncludeRef("", "listannotation.$sectionId"))
-            }
+//            if (annotationMap.isNotEmpty()) {
+            listAnnotationRefs = listOf(XIncludeRef("", "listannotation.$sectionId"))
+//            }
             standOffNode(annotationMap, sectionId)
         }.toString(printOptions = printOptions)
         val surfaceGrpRefs = if (startFacsCount == facsimileCounter.get()) emptyList() else {
@@ -775,26 +775,26 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
     }
 
     private fun Node.standOffNode(annotationMap: MutableMap<Long, AnnotationData>, sectionId: Int) {
-        if (annotationMap.isNotEmpty()) {
-            val noteCounter = AtomicInt(1)
-            "standOff" {
-                "listAnnotation" {
-                    attribute("type", "notes")
-                    attribute("xml:id", "listannotation.$sectionId")
-                    annotationMap.forEach { (id, data) ->
-                        val noteContent = data.text.ifEmpty { data.annotatedText }
-                        val noteText = AnnotationBodyConverter.convert(noteContent)
-                        "note" {
-                            attribute("xml:id", "note_$id")
-                            attribute("n", noteCounter.andIncrement)
-                            attribute("type", data.type.name.replace(" ", "_"))
+//        if (annotationMap.isNotEmpty()) {
+        val noteCounter = AtomicInt(1)
+        "standOff" {
+            "listAnnotation" {
+                attribute("type", "notes")
+                attribute("xml:id", "listannotation.$sectionId")
+                annotationMap.forEach { (id, data) ->
+                    val noteContent = data.text.ifEmpty { data.annotatedText }
+                    val noteText = AnnotationBodyConverter.convert(noteContent)
+                    "note" {
+                        attribute("xml:id", "note_$id")
+                        attribute("n", noteCounter.andIncrement)
+                        attribute("type", data.type.name.replace(" ", "_"))
 //                            comment(data.type.name)
-                            "p" { unsafeText(noteText.replace("<lb/>", "<lb/>\n")) }
-                        }
+                        "p" { unsafeText(noteText.replace("<lb/>", "<lb/>\n")) }
                     }
                 }
             }
         }
+//        }
     }
 
     private fun Node.prologNodes(projectType: String) {
