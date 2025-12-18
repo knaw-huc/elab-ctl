@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
+import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.bufferedWriter
 import org.apache.commons.csv.CSVFormat
@@ -43,7 +44,9 @@ class ConversionReporter(val projectName: String, val conversionConfig: ElabCtlC
     }
 
     fun storeAsCsv() {
-        val path = "out/${projectName}-report.csv"
+        val outDir = "out/${projectName}"
+        File(outDir).mkdirs()
+        val path = "$outDir/conversion-report.csv"
         logger.info { "=> $path" }
         val exportedFields = mutableListOf<String>()
         val labels = mutableListOf<String>()

@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.elaborate.elabctl.archiver
 
+import java.io.File
 import javax.xml.namespace.NamespaceContext
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPath
@@ -177,8 +178,8 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
             .replace("&nbsp;", " ")
             .replace("<br>", "<br/>")
             .replace("</h2>\n<h2>", "")
-            .replace("<td><tr>","<tr><td>")
-            .replace("</tr></trd","</td></tr>")
+            .replace("<td><tr>", "<tr><td>")
+            .replace("</tr></trd", "</td></tr>")
             .trim()
         val wpCaptionReplaced =
             wpCaptionRegexp.replace(cleaned) { "<wpcaption ${it.groups[1]?.value}>" }
@@ -306,7 +307,9 @@ class WordPressExportConverter(private val outputDir: String, val conf: ElabCtlC
                 }
             }
         }
-        val outPath = "out/${conf.projectName}-element-inventory.md"
+        val outDir = "out/${conf.projectName}"
+        File(outDir).mkdirs()
+        val outPath = "$outDir/element-inventory.md"
         logger.info { "=> $outPath" }
         Path(outPath).writeText(mdBuilder.toString())
     }

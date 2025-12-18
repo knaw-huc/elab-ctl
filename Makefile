@@ -48,8 +48,16 @@ brieven-correspondenten-1900:
 	./bin/validate-xml.sh ~/workspaces/editem/elaborate-export/$(BRICOR)/schema/editem-letter.rng build/zip/elab4-$(BRICOR)/letters/*.xml >> out/xml-validate.log
 	less out/xml-validate.log
 
+out/brieven-correspondenten-1900/sizes_pages.tsv: data/brieven-correspondenten-1900-facsimiles.zip data/elab4-brieven-correspondenten-1900.war $(SHADOW_JAR)
+	./bin/elabctl generate-manifests data/brieven-correspondenten-1900-facsimiles.zip data/elab4-brieven-correspondenten-1900.war
+
+.PHONY: brieven-correspondenten-1900-manifests
+brieven-correspondenten-1900-manifests: out/brieven-correspondenten-1900/sizes_pages.tsv
+
 .PHONY: brieven-correspondenten-1900-rsync
 brieven-correspondenten-1900-rsync:
+	rsync -rav out/$(BRICOR)/manifests ~/workspaces/editem/elaborate-export/$(BRICOR)/
+	rsync -rav out/$(BRICOR)/metadata ~/workspaces/editem/elaborate-export/$(BRICOR)/
 	rsync -rav build/zip/elab4-$(BRICOR)/* ~/workspaces/editem/elaborate-export/$(BRICOR)/tei/
 	cd ~/workspaces/editem/elaborate-export/$(BRICOR) && (git commit -a -m "new elaborate export" && git push)
 
@@ -128,9 +136,10 @@ help:
 	@echo
 	@echo "  all-archives - run the tei export for all elaborate projects"
 	@echo
-	@echo "  $(BRICOR)        - to run the tei export for $(BRICOR)"
-	@echo "  $(BRICOR)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(BRICOR)"
-	@echo "  browse-$(BRICOR) - to open the $(BRICOR) gitlab repo in your browser"
+	@echo "  $(BRICOR)           - to run the tei export for $(BRICOR)"
+	@echo "  $(BRICOR)-manifests - to generate the manifests for $(BRICOR)"
+	@echo "  $(BRICOR)-rsync     - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(BRICOR)"
+	@echo "  browse-$(BRICOR)    - to open the $(BRICOR) gitlab repo in your browser"
 	@echo
 	@echo "  $(BOLCOS)        - to run the tei export for $(BOLCOS)"
 	@echo "  $(BOLCOS)-rsync  - to update the letter tei for https://gitlab.huc.knaw.nl/eDITem/$(BOLCOS)"

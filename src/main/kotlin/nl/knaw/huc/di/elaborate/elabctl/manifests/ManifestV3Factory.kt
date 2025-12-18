@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.elaborate.elabctl.manifests
 
+import java.net.URI
 import info.freelibrary.iiif.presentation.v3.AnnotationPage
 import info.freelibrary.iiif.presentation.v3.Canvas
 import info.freelibrary.iiif.presentation.v3.ImageContent
@@ -9,28 +10,50 @@ import info.freelibrary.iiif.presentation.v3.properties.I18n
 import info.freelibrary.iiif.presentation.v3.properties.Label
 import info.freelibrary.iiif.presentation.v3.properties.Metadata
 import info.freelibrary.iiif.presentation.v3.properties.Value
-import info.freelibrary.iiif.presentation.v3.properties.behaviors.ManifestBehavior
 import info.freelibrary.iiif.presentation.v3.services.ImageService3
 import nl.knaw.huc.di.elaborate.elabctl.archiver.EditionConfig
 import nl.knaw.huc.di.elaborate.elabctl.archiver.FacsimileDimensionsFactory.FacsimileDimensions
 
 class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
 
+    data class PMetadata(
+        val baseName: String,
+        val iiifBaseUrl: String,
+        val manifestUrl: URI
+    )
+
     fun forEntry(
         entryName: String,
         facsimileDimensions: List<FacsimileDimensions>,
         config: EditionConfig
-    ): Manifest {
+    ): Pair<Manifest, ManifestGenerator.LetterMetadata> {
         val manifestId = "$manifestBaseUrl/$entryName-manifest.json"
         val metadata = listOf(
             Metadata(Label("en", "Collection"), Value(I18n("en", config.title))),
             Metadata(Label("en", "Section"), Value(I18n("en", entryName))),
         )
-        return Manifest(manifestId, Label("en", entryName))
-            .setRights(LICENSE)
-            .setBehaviors(ManifestBehavior.PAGED)
-            .setMetadata(metadata)
-            .setCanvases(facsimileDimensions.toCanvases(manifestId))
+
+        val pairs = facsimileDimensions.toCanvases(manifestId)
+        val entryMetadata = ManifestGenerator.LetterMetadata(
+            id = entryName,
+            manifest = manifestId,
+            pageMetadata = pairs.map { it.second }
+                .associate {
+                    it.baseName to ManifestGenerator.PageMetadata(
+                        it.iiifBaseUrl,
+                        it.manifestUrl.toString()
+                    )
+                }
+        )
+
+        return Pair(
+            Manifest(manifestId, Label("en", entryName))
+                .setRights(LICENSE)
+//            .setBehaviors(ManifestBehavior.PAGED)
+                .setMetadata(metadata)
+                .setCanvases(pairs.map { it.first }),
+            entryMetadata
+        )
     }
 
     fun forProject(
@@ -46,12 +69,12 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
         )
         return Manifest(manifestId, Label("en", projectTitle))
             .setRights(LICENSE)
-            .setBehaviors(ManifestBehavior.PAGED)
+//            .setBehaviors(ManifestBehavior.PAGED)
             .setMetadata(metadata)
-            .setCanvases(facsimileDimensions.toCanvases(manifestId))
+            .setCanvases(facsimileDimensions.toCanvases(manifestId).map { it.first })
     }
 
-    private fun List<FacsimileDimensions>.toCanvases(manifestId: String): List<Canvas> =
+    private fun List<FacsimileDimensions>.toCanvases(manifestId: String): List<Pair<Canvas, PMetadata>> =
         sortedBy { it.fileName }
             .mapIndexed { i, facsimileDimensions ->
                 val canvasTitle = facsimileDimensions.fileName
@@ -69,7 +92,12 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
                         )
                     }
                 canvas.paintingPages.add(page.addAnnotations(annotation))
-                canvas
+                val pageMetadata = PMetadata(
+                    baseName = facsimileDimensions.fileName.substringBeforeLast("."),
+                    iiifBaseUrl = imageUrl,
+                    manifestUrl = canvas.id
+                )
+                Pair(canvas, pageMetadata)
             }
 
     companion object {
