@@ -11,6 +11,7 @@ import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.raise.either
+import org.apache.logging.log4j.kotlin.logger
 
 object FacsimileDimensionsFactory {
 
@@ -47,6 +48,7 @@ object FacsimileDimensionsFactory {
         }
 
     private fun getImageDimension(inputStream: InputStream, fileName: String): Either<Exception, Dimension> {
+//        logger.info { "reading inputstream from $fileName" }
         val suffix = fileName.split(".").last()
         val iterator = ImageIO.getImageReadersBySuffix(suffix)
         while (iterator.hasNext()) {

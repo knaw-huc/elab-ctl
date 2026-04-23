@@ -459,7 +459,7 @@ class TEIBuilder(val projectConfig: ProjectConfig, val conversionConfig: ElabCtl
                             comment(facs.title)
                         }
                         "graphic" {
-                            attribute("url", "$baseName-${(i + 1).toString().padStart(2, '0')}")
+                            attribute("url", "$baseName-${(i + 1).toString().padStart(2, '0')}.jp2")
                         }
                     }
                 }

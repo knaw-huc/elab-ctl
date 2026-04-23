@@ -73,16 +73,19 @@ object ManifestGenerator {
         when (mode) {
             Mode.ENTRY -> groups.forEach { (entryName, facsimileDimensions) ->
                 val (manifest, entryMetadata) = manifestFactory.forEntry(entryName, facsimileDimensions, elabConfig)
+
                 val manifestsPath = "$destDir/manifests"
                 File(manifestsPath).mkdirs()
-                val outPath = "$manifestsPath/$entryName-manifest.json"
+                val outPath = "$manifestsPath/$entryName.json"
                 logger.info { "=> $outPath" }
                 Path(outPath).writeText(manifest.toString())
-                val metadataDir = "$destDir/metadata/$entryName"
-                File(metadataDir).mkdirs()
-                val metadataPath = "$metadataDir/metadata.json"
-                logger.info { "=> $metadataPath" }
-                Path(metadataPath).writeText(prettyJson.encodeToString(entryMetadata))
+
+//                val metadataDir = "$destDir/metadata/$entryName"
+//                File(metadataDir).mkdirs()
+//                val metadataPath = "$metadataDir/metadata.json"
+//                logger.info { "=> $metadataPath" }
+//                Path(metadataPath).writeText(prettyJson.encodeToString(entryMetadata))
+
                 updatePageSizes(facsimileDimensions, pageSizesFile)
             }
 
@@ -91,7 +94,7 @@ object ManifestGenerator {
                     updatePageSizes(facsimileDimensions, pageSizesFile)
                 }
                 val manifestJson = manifestFactory.forProject(projectName, elabConfig, groups)
-                val outPath = "$destDir/$projectName-manifest.json"
+                val outPath = "$destDir/$projectName.json"
                 logger.info { "=> $outPath" }
                 Path(outPath).writeText(manifestJson.toString())
             }

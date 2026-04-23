@@ -27,7 +27,7 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
         facsimileDimensions: List<FacsimileDimensions>,
         config: EditionConfig
     ): Pair<Manifest, ManifestGenerator.LetterMetadata> {
-        val manifestId = "$manifestBaseUrl/$entryName-manifest.json"
+        val manifestId = "$manifestBaseUrl/$entryName.json"
         val metadata = listOf(
             Metadata(Label("en", "Collection"), Value(I18n("en", config.title))),
             Metadata(Label("en", "Section"), Value(I18n("en", entryName))),
@@ -61,7 +61,7 @@ class ManifestV3Factory(val manifestBaseUrl: String, val iiifBaseUrl: String) {
         config: EditionConfig,
         groups: Map<String, List<FacsimileDimensions>>
     ): Manifest {
-        val manifestId = "$manifestBaseUrl/$projectName-manifest.json"
+        val manifestId = "$manifestBaseUrl/$projectName.json"
         val projectTitle = config.title
         val facsimileDimensions = groups.values.flatten()
         val metadata = listOf(

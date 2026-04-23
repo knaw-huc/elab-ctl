@@ -2,6 +2,7 @@ package nl.knaw.huc.di.elaborate.elabctl.apparatus
 
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -112,10 +113,11 @@ data class AltName(
     val displayName: String,
 )
 
-object App {
+object BioListGenerator {
     @OptIn(ExperimentalSerializationApi::class)
     fun run() {
-        val path = "data/brieven-correspondenten-1900-cnwpersons-dump.json"
+        val project = "brieven-correspondenten-1900"
+        val path = "data/$project-cnwpersons-dump.json"
         logger.info { "<= $path" }
 
         val persons = Json.decodeFromStream<List<Person>>(File(path).inputStream())
@@ -220,11 +222,13 @@ object App {
             }
         }
 
-        val personIdPath = "out/person-ids.json"
+        val personIdPath = "out/$project/person-ids.json"
         logger.info { "=> $personIdPath" }
         ObjectMapper().writeValue(File(personIdPath), koppelnaamToPersonId)
 
-        val bioPath = "out/bio.xml"
+        val apparatusFolderPath = "build/zip/$project/apparatus"
+        Path(apparatusFolderPath).createDirectories()
+        val bioPath = "$apparatusFolderPath/bio.xml"
         logger.info { "=> $bioPath" }
         Path(bioPath).writeText(xml.toString(PrintOptions(singleLineTextElements = true, indent = "  ")))
 
@@ -258,5 +262,5 @@ object App {
 }
 
 fun main() {
-    App.run()
+    BioListGenerator.run()
 }

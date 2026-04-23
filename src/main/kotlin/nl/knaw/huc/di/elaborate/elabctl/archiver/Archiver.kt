@@ -37,9 +37,13 @@ object Archiver {
     fun archive(warPaths: List<String>) {
         val errors: MutableList<String> = mutableListOf()
         warPaths.forEach { warPath ->
-            val projectName = warPath.split('/').last().replace(".war", "")
+            val projectName = warPath
+                .split('/')
+                .last()
+                .replace(".war", "")
+                .replace("elab4-", "")
             val projectConfig = ProjectConfig(
-                projectName = projectName.replace("elab4-", ""),
+                projectName = projectName,
                 personIds = loadPersonIdMap(projectName),
                 divTypeForLayerName = mapOf("Transcription" to "original", "Translation" to "translation")
             )
@@ -101,8 +105,8 @@ object Archiver {
             report.storeAsCsv()
             errors.addAll(convertWordPressExport(projectName, conversionConfig))
             createZip(projectName)
-            storeFacsimilePaths(facsimilePaths)
-            storeScriptLines(scriptLines)
+            storeFacsimilePaths(facsimilePaths, projectName)
+            storeScriptLines(scriptLines, projectName)
             if (errors.isNotEmpty()) {
                 logger.error { "${errors.size} errors found:" }
                 errors.forEach { logger.error { it } }
@@ -134,7 +138,7 @@ object Archiver {
         }
     }
 
-    private fun storeScriptLines(scriptLines: MutableList<String>) {
+    private fun storeScriptLines(scriptLines: MutableList<String>, projectName: String) {
         scriptLines.add(
             "cd /data/tmp &&" +
                     " if [ -f facsimiles.zip ] ; then rm facsimiles.zip; fi &&" +
@@ -144,15 +148,15 @@ object Archiver {
                     " zip -r facsimiles.zip $(find facsimiles/ -type f | sort) manifest-sha256.txt &&" +
                     " rm -rf /data/tmp/facsimiles manifest-sha256.txt"
         )
-        val path = "out/copy-facsimiles.sh"
+        val path = "out/$projectName/copy-facsimiles.sh"
         logger.info { "=> $path" }
         val file = File(path)
         file.writeText(scriptLines.joinToString("\n"))
         file.setExecutable(true)
     }
 
-    private fun storeFacsimilePaths(facsimilePaths: List<String>) {
-        val path = "out/facsimile-paths.txt"
+    private fun storeFacsimilePaths(facsimilePaths: List<String>, projectName: String) {
+        val path = "out/$projectName/facsimile-paths.txt"
         logger.info { "=> $path" }
         File(path).writeText(facsimilePaths.sorted().joinToString("\n"))
     }

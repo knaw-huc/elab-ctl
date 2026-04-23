@@ -3,6 +3,7 @@ package nl.knaw.huc.di.elaborate.elabctl
 import kotlin.system.measureTimeMillis
 import arrow.core.tail
 import org.apache.logging.log4j.kotlin.logger
+import nl.knaw.huc.di.elaborate.elabctl.apparatus.BioListGenerator
 import nl.knaw.huc.di.elaborate.elabctl.archiver.Archiver
 import nl.knaw.huc.di.elaborate.elabctl.manifests.ManifestGenerator
 
@@ -10,6 +11,7 @@ val logger = logger("Main")
 val commands = mapOf(
     "archive" to ::archive,
     "generate-manifests" to ::generateManifests,
+    "generate-bio-apparatus" to ::generateBioApparatus,
     "help" to ::showHelp
 )
 
@@ -56,6 +58,10 @@ fun generateManifests(args: List<String>) {
         println("                     war-path        - path to the elab4-<project>.war file")
         println("                     [--single | -s] - generate a single manifest for the whole project (otherwise, one per entry)")
     }
+}
+
+fun generateBioApparatus(args: List<String>) {
+    BioListGenerator.run()
 }
 
 fun showHelp(args: List<String>) {
